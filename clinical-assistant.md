@@ -311,13 +311,27 @@ Apply the GRADE framework from `references/grade-guide.md` to each critical outc
 
 ### Step 4.1 — Clinical Board (Consciousness Council — Clinical Edition)
 
-Summon **5–6 clinical archetypes** from `references/board-archetypes.md` based on the case.
+**RULE 1 — THE ARCHITECT IS ALWAYS PRESENT.**
+Every board configuration includes The Architect. No exceptions.
+The Architect asks: *"What single underlying pathophysiology unifies ALL findings?"*
+This is the question that converts isolated anomalies into a unified diagnosis.
 
-**Standard clinical board selection heuristics:**
-- **Internal medicine / complex chronic:** Internist + Empiricist + Pragmatist + Contrarian + Ethicist
-- **Neurological / psychiatric:** Neurologist + Psychiatrist + Empiricist + Ethicist + Futurist
-- **Oncological:** Oncologist + Empiricist + Ethicist + Pragmatist + Futurist
-- **Rare / unexplained disease:** Rare-Disease Specialist + Empiricist + Outsider + Contrarian + Geneticist
+**RULE 2 — CHECK THE MULTI-SYSTEM TRIGGER BEFORE SELECTING A CONFIGURATION.**
+Activate the Rare/Unexplained configuration immediately if ANY of these are true:
+- ≥ 2 organ systems affected without a single obvious acquired cause
+- Patient < 55 with vascular event and no classical risk factors (no HTN, no dyslipidemia, no AF)
+- First-degree family member with the same or similar phenotype
+- Any imaging finding described as "unusual for age" or "disproportionate for age"
+- Lab pattern that fits a vascular shunt or systemic process better than an isolated organ disease
+- Clinician or report uses words like "unexpected", "striking", "remarkable" about any finding
+
+When the trigger fires → use Rare/Unexplained board, not the standard configurations below.
+
+**Standard clinical board selection (apply only if multi-system trigger does NOT fire):**
+- **Internal medicine / complex chronic:** Architect + Internist + Empiricist + Pragmatist + Contrarian + Ethicist
+- **Neurological / psychiatric:** Architect + Neurologist + Empiricist + Ethicist + Patient Advocate + Futurist
+- **Oncological:** Architect + Oncologist + Empiricist + Ethicist + Pragmatist + Futurist
+- **Rare / unexplained disease:** Architect (lead) + Rare-Disease Specialist + Empiricist + Outsider + Contrarian + Geneticist
 
 Each archetype delivers:
 ```
