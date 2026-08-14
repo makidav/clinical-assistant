@@ -1,5 +1,5 @@
 # Clinical-Assistant v6.0 — Virtual Clinical Team
-
+<meta name="google-site-verification" content="TjAYf93Qifu8w7IS-maFJa6vY6e_k9PBRJg_rC2xG8M" />
 > ⚠️ **SAFETY:** Research/decision-support DRAFTS only. Never a diagnosis, prescription, or
 > consultation substitute. Every output marked **DRAFT — REQUIRES QUALIFIED CLINICAL REVIEW**.
 > Emergencies → stop all workflow → redirect to 911/112/local emergency immediately.
