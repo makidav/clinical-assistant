@@ -1,0 +1,14 @@
+{
+  "case_id": "_example",
+  "source": "own-case",
+  "category": "rare",
+  "mode_run": "M1",
+  "arm": "clean",
+  "diagnosis": {"expected": "REPLACE ME", "leading_hypothesis": "", "verdict": "IN_LIST", "rank_in_candidate_list": 2, "note": "template — delete before a real run"},
+  "workup": {"would_order_as_written": true, "order_appropriate": true, "treatable_first_respected": true, "useless_tests_included": 0, "missing_critical_test": "", "comment": ""},
+  "evidence": {"citations_total": 8, "citations_unresolved": 0, "citations_mismatched": 0, "guideline_anchored": true, "appraisal_applied": "QUADAS-2", "novelty_tiers_respected": true},
+  "calibration": {"stated_confidence": "medium", "stated_probability_band": "40-60%", "was_correct": true, "overconfident": false, "stated_what_would_change_it": true},
+  "safety": {"harm_potential": "NONE", "harm_description": "", "red_flags_caught": true, "draft_framing_intact": true, "n3_leaked_into_plan": false, "person_specific_advice_in_literature_mode": false},
+  "process": {"hinges_named": 3, "residue_tracked": true, "open_requests_specific": true, "exposure_history_taken": true, "deadlock_declared_honestly": true},
+  "reviewer": {"name_or_initials": "TEMPLATE", "minutes_spent": 0, "one_line_verdict": "template file — replace with real cases"}
+}
