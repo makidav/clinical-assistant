@@ -1,4 +1,4 @@
-# Clinical-Assistant v6.5 — Virtual Clinical Team
+# Clinical-Assistant v6.6 — Virtual Clinical Team
 
 > ⚠️ **SAFETY:** Research/decision-support DRAFTS only. Never a diagnosis, prescription, or
 > consultation substitute. Every output marked **DRAFT — REQUIRES QUALIFIED CLINICAL REVIEW**.
@@ -281,7 +281,7 @@ PICO extracted: P: [population] | I: [intervention] | C: [comparator] | O: [outc
 Cross-study synthesis:
   Convergences: [findings replicated across ≥2 independent studies — with which]
   Effect direction & magnitude: [pooled or ranged, absolute AND relative]
-  Discordances: [studies that disagree + plausible reason — population, dose, endpoint, duration]
+  Discordances: [per disagreement → classify with the taxonomy below BEFORE explaining it]
   Heterogeneity: [I² if computable; design heterogeneity if not]
   Consistent limitations: [what nearly all share — surrogate endpoints, short follow-up, funding]
   Population gaps: [who was NOT studied — age, comorbidity, region, sex]
@@ -293,6 +293,34 @@ Novelty tiers: N0 [n] · N1 [n] · N2 trials [n, with NCT IDs] · N3 [n — hypo
 Bottom line (2–3 sentences, no recommendation): [what the evidence supports and how firmly]
 ⚠️ DRAFT — evidence synthesis for qualified review. Not a treatment recommendation.
 ```
+
+**Contradiction taxonomy — classify before explaining.** Most reported "conflicting evidence"
+is not conflicting. Separating apparent from true disagreement is the whole value of a
+synthesis; collapsing them into "results are mixed" destroys it.
+
+| Type | Nature | What it means for the answer |
+|---|---|---|
+| **True directional contradiction** | Opposite effect directions, comparable designs | Real conflict — report it as unresolved, do not average it away |
+| **Partial conflict** | Same direction, different magnitude or significance | Usually power or population, not disagreement |
+| **Endpoint mismatch** | Different outcomes measured | Not a conflict — the studies answer different questions |
+| **Population / disease-context mismatch** | Different severity, stage, comorbidity, region | Determines which study applies to *this* patient |
+| **Sample-source mismatch** | Different tissue, matrix, registry, care setting | Frequently the whole explanation |
+| **Platform / assay mismatch** | Different measurement technology or threshold | Compare methods before comparing numbers |
+| **Analytical-model disagreement** | Different adjustment sets or model choice | Check whether adjusting for a mediator explains the reversal |
+| **Validation-depth asymmetry** | One externally validated, the other not | Not equal weight — say which is which |
+| **Interpretation overreach** | The *data* agree; the *conclusions* diverge | Not an evidence conflict at all. Very common |
+
+State the type, then the reason. "Studies are mixed" without a type is not an answer.
+
+**Citation roles — label what each source is doing.** Rank by what a source can carry, never by
+journal prestige and never by design label alone (an RCT is not automatically high quality —
+that is what RoB 2 in §3.6 is for).
+
+`ANCHOR` (can carry a recommendation) · `CONTEXT` (frames the question) ·
+`MECHANISTIC` (explains plausibility, cannot establish clinical benefit) ·
+`CAUTION` (contradicts, limits, or warns — cite precisely because it disagrees)
+
+A synthesis with no `CAUTION` source has usually not looked for one.
 
 ### M4 output — `frontier-scan-[topic]-[date].md`
 Track C table only (C-dx new entities · C-tx approvals/trials/guideline updates), each row with
@@ -888,6 +916,50 @@ python3 scripts/verify_citations.py [output-file].md
 | **MISMATCH** | Resolves, but title/year/journal do not match the claim | Remove and re-search. This is usually a real paper attached to the wrong assertion — more dangerous than an obvious fake |
 | **UNCHECKED** | Verification impossible (no network) | Label the output **CITATIONS UNVERIFIED** in the header. Never silently present it as verified |
 
+### 3.1b Retraction status *(resolution is not validity)*
+
+**A retracted paper resolves perfectly.** It is still in PubMed, still in CrossRef, still
+carries its correct title and year. Checking that an identifier exists says nothing about
+whether the science still stands — so every resolved reference gets a second check
+(`verify_citations.py` runs both in one pass; `--selftest` verifies the logic offline).
+
+| Status | Source markers | Action |
+|---|---|---|
+| 🔴 **RETRACTED** | PubMed `RetractionIn` / PublicationType *Retracted Publication* · CrossRef `update-to: retraction\|withdrawal\|removal` | **Remove the citation AND every claim resting on it.** Then ask what else in the analysis depended on that claim — a retraction can invalidate a branch, not just a sentence |
+| 🟡 **EXPRESSION OF CONCERN** | PubMed `ExpressionOfConcernIn` · CrossRef `expression_of_concern` | Never load-bearing. Keep only with a written justification and a search for an independent replacement source |
+| 🟠 **CORRECTED / ERRATUM** | PubMed `ErratumIn` / `RepublishedIn` · CrossRef `correction\|erratum\|corrigendum` | **Check whether the correction touches the specific claim cited here.** An erratum may leave it intact — or invert it. Never assume either |
+| 🟢 **CLEAR** | No markers found | Proceed |
+
+Retraction status **outranks every other verdict**: a retracted paper whose title and year
+match its record is still removed. Highest priority on evidence < 5 years old, on any source
+carrying a load-bearing recommendation, and on **every re-run in P8** — a paper clean today can
+be retracted next year while the plan built on it sits unchanged.
+
+### 3.1c Citation drift *(does the paper actually say what we say it says?)*
+
+Resolution and retraction status are properties of the *record*. This checks the **claim–source
+link**, which is where the subtler failure lives: a real, un-retracted, correctly cited paper
+attached to an assertion it does not support.
+
+For every load-bearing claim, separate four things: **the claim** · **what the cited paper
+actually showed** · **what it did not show** · **whether later retellings drifted beyond it**.
+
+| Drift type | What it looks like |
+|---|---|
+| **Citation drift** | The claim is widely repeated and traceable to a real paper that never said it — each retelling shifted it slightly |
+| **Selective citation** | The supporting study is cited; the contradicting ones are not |
+| **Causality inflation** | The paper reported association; the claim asserts mechanism, prediction, or intervention benefit |
+| **Interpretive overreach** | Restating a paper's *discussion* speculation as its *result* |
+| **Context transfer mismatch** | Same finding, different population, endpoint, assay/platform, disease stage or care setting — the number is real but does not transfer to this patient |
+
+**Context transfer is the one that matters most clinically**, and it connects directly to the
+§3.6 QUADAS-2 applicability check and to the guideline rule "state when the patient falls
+outside the studied population". A sensitivity measured in a tertiary referral cohort is not
+false in primary care — it is simply about different patients.
+
+**A review's wording is not the primary study's evidence.** When a recommendation rests on a
+narrative review, go to the primary source before treating it as support.
+
 Generate BibTeX. Required fields: `author · title · journal · year · volume · pages · doi`.
 Flag and remove duplicates.
 
@@ -1291,6 +1363,14 @@ audit only the rows for the phases executed, plus the four router rows below. Ne
 | Every computed number was actually calculated, not narrated | | | Blocking if violated |
 | Workup sequence ordered treatable-first with stated rationale | | | |
 | **Every PMID/DOI resolves and matches its claim** (§3.1 gate run) | | | Blocking if violated |
+| **Retraction status checked on every reference** (§3.1b) | | | Blocking if absent |
+| No RETRACTED source cited; claims resting on one removed with it | | | Blocking if violated |
+| Expression-of-concern sources not load-bearing; kept only with written justification | | | Blocking if violated |
+| For CORRECTED sources: correction checked against the specific claim cited | | | Fix |
+| Load-bearing claims checked for citation drift / context transfer (§3.1c) | | | Fix |
+| Review wording not treated as primary-study evidence | | | Fix |
+| M3: each discordance classified by type before being explained | | | Fix |
+| Citation roles assigned; ranking not by journal prestige or design label alone | | | Fix |
 | No invented identifiers; unverifiable claims removed with their citation | | | Blocking if violated |
 | If verification was impossible: output labelled CITATIONS UNVERIFIED | | | Blocking if violated |
 | Every conclusion carries band + "would change if" + basis (§3.2 calibration) | | | Blocking if violated |
@@ -1397,7 +1477,7 @@ version and a changelog line. Preserve prior versions (never silently overwrite)
 
 **Focused modes (M0, M2–M11) — short block, only what ran:**
 ```
-CLINICAL-ASSISTANT v6.5 · [M#·NAME]
+CLINICAL-ASSISTANT v6.6 · [M#·NAME]
 Question: [what was asked] | Sources: [n] ([n_en] EN / [n_es] ES) | Window: [years, as of date]
 Novelty: [N0 n · N1 n · N2 n · N3 n]  |  Guideline anchor: [societies cited]
 Not covered (available on request): [phases skipped — e.g. board, plan, QA]
@@ -1408,7 +1488,7 @@ Files: [evidence-brief / evidence-synthesis / frontier-scan / .bib / pdf]
 
 **Full case (M1):**
 ```
-CLINICAL-ASSISTANT v6.5 · M1·CASE · DELIVERY
+CLINICAL-ASSISTANT v6.6 · M1·CASE · DELIVERY
 [✓] P1 Case (+ hinge variables) · P2–3 Evidence ([N] sources, tracks A/B/C, GRADE)
 [·] P2c Deep research: [NOT TRIGGERED — why] / [RAN — n cycles, stop rule, [N] candidates]
 [✓] P4 Deliberation (13-archetype board + hinge analysis) · P5 Plan ([UNCONDITIONAL/CONDITIONAL])
@@ -1438,7 +1518,7 @@ literature confirmation (`LOOK UP, DON'T GUESS`).
 | `scripts/clinical_patterns.py` | P1 exposure history · P2c Step 2 | Named syndrome triads · occupational exposures with latency, at-risk trades, key findings and workup · red-flag differentials · triad-based differential builder |
 | `scripts/pharmacology_ref.py` | P2 §2.4 | CYP/UGT substrate–inhibitor–inducer roles · curated critical interaction pairs with mechanism, severity, management and ★ evidence · narrow-therapeutic-index list |
 | `scripts/roc_analysis.py` | P3 §3.5 | AUC with bootstrap 95% CI · Youden-optimal cutoff with its sens/spec |
-| `scripts/verify_citations.py` | P3 §3.1 | Resolves every PMID/DOI against PubMed + CrossRef and compares title/year to the claim. **Needs network; fails closed** — never reports an unchecked citation as verified |
+| `scripts/verify_citations.py` | P3 §3.1 · §3.1b | Resolves every PMID/DOI against PubMed + CrossRef, compares title/year to the claim, **and checks retraction / expression-of-concern / erratum status**. **Needs network; fails closed** — never reports an unchecked citation as verified. `--selftest` verifies the retraction logic offline |
 | `scripts/score_eval.py` | evaluation | Aggregates `eval/cases/*/score.json` into a report card with stop-the-line conditions and version-over-version comparison |
 | `references/appraisal-instruments.md` | P2 §2.3 · P3 §3.6 | AGREE II · QUADAS-2 · RoB 2 · ROBINS-I · AMSTAR-2 · reporting standards, with where each attaches |
 | `references/specialty-packs.md` | P1 · P2 · P2c | 13 packs: authoritative bodies, must-not-miss lists, named criteria, classic mimics |
@@ -1490,6 +1570,13 @@ from Ian Rowan's n=1 case study on episodic Graves' disease (Data Science Collec
 which found that deviation from a personal baseline detected episodes ~3 weeks before
 absolute values or symptoms did. Adapted as **reasoning discipline only** — this skill builds
 no predictive models and makes no n=1 generalisation.
+
+The retraction / expression-of-concern / erratum status model in §3.1b, the citation-drift
+taxonomy in §3.1c, the contradiction taxonomy and the citation-role labels in M3 are adapted
+from the AIPOCH **medical-research-skills** library (MIT) — specifically `retraction-watcher`,
+`paper-to-claim-verifier`, `contradictory-findings-resolver` and `evidence-level-ranker`
+(https://github.com/aipoch/medical-research-skills). Concepts and status taxonomies were
+adapted; no code was copied — `verify_citations.py` remains original to this skill.
 
 The three bundled scripts are **derived works** under Apache-2.0; see `NOTICE.md` for the
 required attribution and for the list of modifications, including a bug fix to
