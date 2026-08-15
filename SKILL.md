@@ -1,34 +1,35 @@
 ---
 name: clinical-assistant
 description: >
-  A self-contained Virtual Clinical Team with an intent router (P0) that runs EITHER a focused
-  single-purpose task OR the full 8-phase workflow — intake, evidence search, GRADE validation,
-  board deliberation, treatment plan, final report, QA, and update — plus two conditional
-  modules: imaging analysis (P2b) and a bounded deep diagnostic research loop (P2c) for rare,
-  newly described, undiagnosed, or treatment-refractory cases. The whole team is embedded in
-  this one skill (no other skills to install). Focused modes answer literature questions
-  ("busca estudios recientes sobre X", "qué evidencia hay de GLP-1 en CKM", "revisa este
-  paper") without forcing a full case workup. Handles
-  conditional treatment planning: when a decision-critical datum is missing, it writes the
-  plan as a decision tree instead of one guess. Trigger when the user presents symptoms, a
-  diagnosis, or treatment questions, or asks about medical studies/evidence/guidelines, or
-  says: "I have these symptoms", "necesito un plan de
-  tratamiento", "analyze this case", "escribe un informe clínico", "clinical board", "junta
-  clínica", "nadie sabe qué tengo", "undiagnosed", "rare disease", "enfermedad rara",
-  "deep research", "investigación profunda", "busca estudios", "qué dice la evidencia",
-  "últimas guías", "newest treatment", "tratamiento más novedoso",
-  or "clinical-assistant". Fully bilingual English/Spanish. Produces research/
-  decision-support DRAFTS only — never a diagnosis, prescription, or substitute for a
-  licensed professional.
+  Self-contained Virtual Clinical Team. An intent router picks ONE focused task or the full
+  8-phase workflow (intake, evidence search, GRADE, 13-archetype board, treatment plan, report,
+  QA, update), plus conditional imaging analysis and a bounded deep-research loop for rare, newly
+  described, undiagnosed or treatment-refractory cases. Focused modes answer literature questions
+  without forcing a full workup. Missing decision-critical data becomes a decision tree, never a
+  guess. Trigger on symptoms, a diagnosis, treatment or evidence questions, and on: "analiza este
+  caso", "plan de tratamiento", "informe clinico", "junta clinica", "nadie sabe que tengo", "busca
+  estudios", "que dice la evidencia", "ultimas guias", "tratamiento mas novedoso", "analyze this
+  case", "clinical board", "rare disease", "undiagnosed", "deep research", "clinical-assistant".
+  Bilingual EN/ES. Produces research and decision-support DRAFTS only, never a diagnosis,
+  prescription, or substitute for a licensed professional.
 license: CC-BY-4.0
 metadata:
-  version: "6.3"
+  version: "6.5"
   self-contained: true
   integrates: 28 embedded capabilities + 13-archetype board + 11-mode intent router
   language: bilingual EN+ES
   bundled: "scripts/clinical_patterns.py · scripts/pharmacology_ref.py ·
-    scripts/roc_analysis.py (offline, pure-stdlib, Apache-2.0 — see NOTICE.md)"
-  changelog: "6.3 — bug fixes: English-first database queries, occupational/environmental
+    scripts/roc_analysis.py · scripts/validate_skill.py · scripts/score_eval.py (offline) ·
+    scripts/verify_citations.py (needs network) · references/ · eval/"
+  changelog: "6.5 — validity layer: citation verification as a hard gate (L1), calibration
+    protocol replacing adjectival confidence (L2), validated appraisal instruments AGREE II /
+    QUADAS-2 / RoB 2 / ROBINS-I / AMSTAR-2 (L3), 13 specialty routing packs (L4), and an
+    evaluation harness with scoring rubric and bias-injection protocol (L5/L6).
+    6.4 — install fix: description trimmed to <1024 chars. Added personal-baseline /
+    rate-of-change reasoning, episodic-presentation intake with timing gate, residue rule
+    (unexplained findings are signal), standing OPEN REQUESTS channel, and
+    scripts/validate_skill.py structural linter.
+    6.3 — bug fixes: English-first database queries, occupational/environmental
     history in P1, bidirectional drug-interaction analysis, quantitative discriminating-test
     evaluation (§3.5 Bayes/LR). Added guideline hierarchy, 4 rare-disease heuristics,
     validated risk scores, EU/UK/LatAm trial registries, on-target vs off-target AE
@@ -41,7 +42,7 @@ metadata:
     loop-back + 4 new P7 QA gates."
 ---
 
-# Clinical-Assistant v6.3 — Virtual Clinical Team
+# Clinical-Assistant v6.5 — Virtual Clinical Team
 
 > ⚠️ **SAFETY:** Research/decision-support DRAFTS only. Never a diagnosis, prescription, or
 > consultation substitute. Every output marked **DRAFT — REQUIRES QUALIFIED CLINICAL REVIEW**.
@@ -131,6 +132,48 @@ An eyeballed Bayesian update is a wrong Bayesian update.
 progressively as each phase completes, rather than composing everything at the end. Long
 workflows that build the deliverable only at the end lose work when interrupted and tend to
 drop earlier findings.
+
+**OPEN REQUESTS — the skill asks the human back.** Maintain a standing, cumulative block of
+what is needed *from the user* and carry it to every checkpoint and into Delivery. The human is
+part of the pipeline, not merely its input: prior labs, an old discharge summary, a past job, a
+date, or a decision the user alone can make are often the highest-value missing pieces, and
+they never surface unless asked for by name.
+
+```
+📋 OPEN REQUESTS — [n] items
+  DATA:     [specific document/value + why it changes the analysis]
+  DECISION: [choice only the user/clinician can make + the options]
+  ACCESS:   [connector, record, or registry that would resolve a gap]
+  RESOLVED: [items closed since last checkpoint]
+```
+Rules: be specific ("the TSH from 2023, to establish the personal baseline" — not "more labs");
+state what each item would change; never block the workflow waiting on it — proceed with
+conditional branches and keep the request open. Every **PENDING-HINGE** appears here
+automatically.
+
+**CALIBRATE, DON'T REASSURE.** The goal is never maximum confidence — it is confidence that
+tracks reality. A system that says 95% and is right 70% of the time is **more dangerous** than
+one that says 70% and is right 70%, because unearned confidence stops the reviewer checking.
+
+Every substantive conclusion carries three things, not one:
+```
+Confidence: [band] | Would change if: [the specific finding that moves it] | Basis: [what it rests on]
+```
+Bands are explicit and mean what they say: **High ~85%+** · **Moderate ~60–85%** ·
+**Low ~30–60%** · **Very low <30%**. Use the number when it can be reasoned; use the band when
+it cannot; never use a bare adjective.
+
+- **"Would change if" is mandatory.** A confidence with no stated falsifier is an opinion
+  wearing a number. It must name a real, obtainable finding — usually a hinge variable.
+- **Confidence in a conclusion never exceeds the certainty of the evidence under it.** A
+  recommendation resting on Very Low GRADE cannot be reported as high confidence, however well
+  the case fits.
+- **Banned language:** "clearly", "definitely", "without doubt", "certainly", "obviously",
+  "this confirms", "diagnostic of" — and any bare "is" where "is consistent with" is accurate.
+- **Prefer the honest wide interval to the impressive narrow one.** When inputs are uncertain,
+  propagate that uncertainty into the output as a range; do not launder it into a point estimate.
+- **Record the pair.** State the confidence *before* the result is known so it can be scored
+  later (see `eval/rubric.md` — overconfidence rate is the metric tracked across versions).
 
 **PHI:** work only with de-identified data. If identifiers appear, request de-ID first.
 **Evidence sourcing bilingual regardless of output language:** EN (PubMed, Cochrane, NEJM,
@@ -349,6 +392,66 @@ no prior stroke — if positive, score becomes 6)`, never as a bare number.
 **Wells scores feed §3.5:** a pretest probability is the *prior* for the Bayesian update. Carry
 it forward rather than discarding it once a test is ordered.
 
+### Personal baseline & rate of change *(read trends, not just reference ranges)*
+
+A value inside the reference range can still be the signal. **Deviation from the patient's own
+baseline is often more informative than position on a population distribution.**
+
+For every quantitative finding, capture three things, not one:
+`current value | patient's own prior baseline (and when) | rate of change`
+
+> A TSH that is "normal" but halved in six weeks is a moving system. A resting heart rate of 72
+> is unremarkable — unless this patient has lived at 58 for three years. Reference ranges are
+> population objects; **the patient is the better control group.**
+
+- Ask explicitly for **prior values** of any abnormal (or borderline) result. "Do you have older
+  labs?" is one of the highest-yield questions in the intake.
+- Flag any parameter with a **sustained directional trend**, even within range.
+- **Continuous/wearable data** (resting HR, HRV, sleep, weight, glucose, BP logs): ask whether it
+  exists. Years of it often do. Use it for **trend and baseline deviation only** — it is
+  screening-grade context, never diagnostic, and its limitations belong in every mention of it.
+
+### Episodic & relapsing presentations *(a different intake shape)*
+
+If the picture is intermittent — well, then unwell, then well again — the standard "current
+state" intake captures the wrong window. Ask instead:
+
+| Ask | Why it is diagnostic |
+|---|---|
+| **What is the baseline between episodes?** Fully well, or partially? | Complete inter-episode normality points somewhere very different from residual deficit |
+| **Prodrome** — earliest change before the episode is undeniable | Often the only actionable window; frequently non-specific (sleep, mood, HR) |
+| **Duration, frequency, and whether attacks are stereotyped** | Stereotypy suggests a single mechanism; variability suggests several |
+| **Provocation** (fasting, infection, exertion, heat, menses, protein load, drugs) | Feeds the metabolic-trigger heuristic in P2c — and provoked disorders are disproportionately treatable |
+| **What resolves it**, and how fast | Spontaneous vs. intervention-dependent resolution splits the differential |
+
+**Timing gate:** if the diagnostic test is only informative *during* an attack (many metabolic,
+arrhythmic, angioedema and periodic-fever entities), say so explicitly in the plan and name the
+capture window. A correctly chosen test drawn at the wrong moment reads as a negative and
+falsely closes the hypothesis — record this as a **PENDING-HINGE**, not as an exclusion.
+
+### Specialty routing *(load the matching pack — `references/specialty-packs.md`)*
+
+Once the involved system(s) are identifiable, load the corresponding pack(s). Each gives four
+things: **authoritative bodies** (route P2 guideline searches there first) · a
+**must-not-miss list** (run against the case before leaving P1) · **named criteria sets**
+(to retrieve — never to recite from memory) · **classic mimic pairs**.
+
+The packs contain **routing information, not clinical facts** — deliberately. Doses, cut-offs
+and thresholds go stale and are precisely where confident errors live (`LOOK UP, DON'T GUESS`).
+Criteria-set *names* are stable; their *contents* are not.
+
+Multi-system presentations load several packs, and the pack boundary is often exactly where
+the answer sits — that is why the P2c multi-system trigger exists. Absence from a must-not-miss
+list means nothing; the lists are screening prompts, not differentials.
+
+Cross-cutting packs that apply regardless of specialty: **geriatrics/polypharmacy** (any
+patient on ≥5 drugs — a new symptom is a drug effect until proven otherwise) and
+**obstetrics** (pregnancy/lactation status is a hard gate on every drug recommendation, not a
+modifier).
+
+**Regional prior:** the same presentation carries different pre-test probabilities by
+geography. State the assumed population — it drives everything in §3.5.
+
 ### Red-flag screening (active throughout intake → act immediately if detected)
 
 | Red flag | Action |
@@ -392,6 +495,8 @@ State explicitly which fields are PENDING-HINGE and carry them forward as named 
 # Structured Clinical Case — [date] | DRAFT
 Demographics: [age, sex — no identifiers] | Chief complaint: [patient's own words]
 Symptoms & timeline: [chronology; onset as relative durations]
+Pattern: [continuous / episodic — if episodic: inter-episode baseline, prodrome, frequency, provocation, resolution]
+Personal baselines & trends: [parameter: current | prior value (date) | direction & rate]
 Co-occurring symptoms: [even seemingly unrelated]
 Prior therapeutic context: [tried + response]
 Preliminary hypotheses: [conditions to investigate — NOT a diagnosis]
@@ -402,10 +507,12 @@ Decision-critical data:
 Tx-blocking status: [BLOCKED pending {list} / CLEAR to plan conditionally]
 PICO: | # | Population | Intervention | Comparison | Outcome |
 Red flags: [identified — or "none at this stage"]
+Exposure history: [occupational (incl. PAST jobs) · environmental · travel · animals — or "screened, none"]
 Required specialist types: [specialties]
+📋 OPEN REQUESTS: [data / decisions / access needed from the user — every PENDING-HINGE appears here]
 ```
 
-→ **CHECKPOINT ①** Show structured case + hinge variables; confirm before P2.
+→ **CHECKPOINT ①** Show structured case + hinge variables + open requests; confirm before P2.
 
 ---
 
@@ -650,6 +757,24 @@ confirming that label. Explicitly:
 - At Cycle 4, prior labels are reintroduced **only** to be audited (see 2c.5).
 - Never build a search query around a prior label in Cycles 1–3. Build it around **finding combinations**.
 
+### RULE 0b — THE UNEXPLAINED FINDING IS DATA, NOT NOISE
+
+When a candidate fails to explain a finding, the reflex is to discount the finding so the
+candidate survives. Invert it: **track the residue explicitly and treat it as the most
+informative thing in the case.**
+
+- Maintain a running **residue list**: every finding that no surviving candidate explains.
+- Before each cycle's pruning, ask: *does the residue itself form a pattern?* Findings that
+  cluster in time, in one organ system, or around one trigger are frequently the real signal —
+  a second concurrent disease, a drug effect, or an entity nobody has named yet.
+- A finding is only removed from the residue when an explanation is **found**, not when it
+  becomes inconvenient. Explaining it away as "incidental", "functional", "anxiety" or
+  "artefact" requires the same evidentiary bar as any other claim.
+- If the residue survives to P4, it is what the board must confront (RULE 3b deadlock), and it
+  becomes the phenotype vector for any loop-back.
+
+> The pattern that looks like error is often the finding that has not been understood yet.
+
 ### The loop — max 4 cycles, 5 steps each
 
 **Cycle budget is hard.** State the cycle number in the output. Declare residual uncertainty
@@ -790,8 +915,31 @@ reply and correct it before continuing.
 
 ## P3 · GRADE VALIDATION *(citation-management + statistical-analysis + statistical-power + ab-test-analysis + exploratory-data-analysis)*
 
-### 3.1 Citation validation
-Verify DOI/PMID (OpenAlex + CrossRef or web). Generate BibTeX. Required: `author · title · journal · year · volume · pages · doi`. Flag/remove duplicates and non-verifiable papers.
+### 3.1 Citation validation *(HARD GATE — a fabricated reference is the worst failure mode)*
+
+Every PMID/DOI must **resolve to a real record whose title and year match the claim made about
+it**. Verify with OpenAlex/CrossRef/PubMed, or run the bundled gate:
+```bash
+python3 scripts/verify_citations.py [output-file].md
+```
+
+**Three verdicts, three consequences — no fourth option:**
+
+| Verdict | Meaning | Action |
+|---|---|---|
+| **RESOLVED + matches** | Record exists and says what we claim | Keep · cite normally |
+| **UNRESOLVED** | Identifier does not exist | **REMOVE the reference and every claim resting only on it.** Do not "flag and keep" — an unverifiable citation lends borrowed authority to an unsupported statement |
+| **MISMATCH** | Resolves, but title/year/journal do not match the claim | Remove and re-search. This is usually a real paper attached to the wrong assertion — more dangerous than an obvious fake |
+| **UNCHECKED** | Verification impossible (no network) | Label the output **CITATIONS UNVERIFIED** in the header. Never silently present it as verified |
+
+Generate BibTeX. Required fields: `author · title · journal · year · volume · pages · doi`.
+Flag and remove duplicates.
+
+**Never invent an identifier to fill a field.** If a PMID is unknown, the field stays empty —
+an empty field is honest, a plausible-looking wrong number is not. If no verified source
+supports a clinical claim, the claim is removed with it.
+
+**P7 gate:** any unresolved or mismatched citation is a **blocking** QA failure.
 
 ### 3.2 Statistical analysis
 Per study: 95%CI · p-values · effect size (Cohen's d / OR / RR / NNT / NNH) · heterogeneity
@@ -879,6 +1027,34 @@ Youden-optimal cutoff. Then build the 2×2 at that cutoff and return to Step 2. 
 ignores the operating point (always report sens/spec at the cutoff actually used); a cutoff
 chosen and evaluated on the same data is optimistic; spectrum bias inflates performance
 measured on clearly-sick vs clearly-well subjects.
+
+### 3.6 Source appraisal *(instruments, not impressions — see `references/appraisal-instruments.md`)*
+
+GRADE already asks "risk of bias?". These are **how that question gets answered
+reproducibly**. Load the reference file and apply the matching instrument:
+
+| Source type | Instrument | Consequence of a bad rating |
+|---|---|---|
+| Clinical practice guideline | **AGREE II** (6 domains; rigour of development + editorial independence carry the signal) | Loses precedence over a better-conducted guideline regardless of issuing body; conflicts surfaced, not resolved silently |
+| Diagnostic accuracy study feeding §3.5 | **QUADAS-2** (patient selection · index test · reference standard · flow & timing, + applicability) | Sens/spec flagged; post-test probability reported as a **range**, not a point |
+| Randomised trial | **RoB 2** (5 domains; overall = worst domain, not the average) | Feeds the GRADE risk-of-bias downgrade |
+| Non-randomised intervention study | **ROBINS-I** (confounding + selection are decisive) | A *critical* rating excludes the study from synthesis entirely |
+| Systematic review | **AMSTAR-2** (7 critical items) | *Critically low* confidence → cannot anchor a recommendation |
+| Any study | Reporting standards — CONSORT · STARD · TRIPOD · PRISMA · STROBE · CARE | Missing elements stated as limitations, never ignored |
+
+**Reporting rule:** attach the domain judgments **with the sentence of evidence that drove
+each one**, so a reviewer can overturn any of them in seconds. Never a composite quality score.
+
+**⚠️ Supervision requirement.** Published evaluation of LLM-applied risk-of-bias assessment
+finds only *moderate* agreement with expert judgment. These instruments are **structured aids
+for a human reviewer, not automated verdicts** — say so in the output whenever they are used.
+
+**Two rules worth stating on their own:**
+- **AGREE II replaces reputation.** "NICE outranks a society guideline" is a heuristic; when a
+  recommendation is load-bearing, appraise what the guideline actually did.
+- **TRIPOD for any model or score:** a prediction model reported without **calibration** and
+  without **external validation** never drives a recommendation, however good its AUC.
+  Discrimination and calibration are different properties.
 
 ### P3 output — `grade-evidence-[date].md` + `references-[date].bib`
 
@@ -1158,6 +1334,21 @@ audit only the rows for the phases executed, plus the four router rows below. Ne
 | Trial search covered CT.gov + EU CTIS + ISRCTN (+ regional registries) | | | Fix |
 | Every computed number was actually calculated, not narrated | | | Blocking if violated |
 | Workup sequence ordered treatable-first with stated rationale | | | |
+| **Every PMID/DOI resolves and matches its claim** (§3.1 gate run) | | | Blocking if violated |
+| No invented identifiers; unverifiable claims removed with their citation | | | Blocking if violated |
+| If verification was impossible: output labelled CITATIONS UNVERIFIED | | | Blocking if violated |
+| Every conclusion carries band + "would change if" + basis (§3.2 calibration) | | | Blocking if violated |
+| Confidence never exceeds the GRADE certainty beneath it | | | Blocking if violated |
+| No banned certainty language ("clearly", "definitely", "diagnostic of") | | | Fix |
+| Appraisal instrument applied to load-bearing sources, with per-domain evidence (§3.6) | | | Fix |
+| Appraisal presented as reviewer aid, not automated verdict | | | Fix |
+| Specialty pack(s) loaded; must-not-miss list run against the case | | | Blocking if absent |
+| Named criteria retrieved, never recited from memory | | | Blocking if violated |
+| Prior values requested for abnormal/borderline results (personal baseline established) | | | Fix |
+| If episodic: inter-episode baseline + provocation captured, and attack-window timing stated for any time-sensitive test | | | Blocking if violated |
+| Residue list maintained; no finding dismissed as incidental/functional without evidence | | | Blocking if violated |
+| OPEN REQUESTS block present, specific, and carried to Delivery | | | Fix |
+| Wearable/continuous data used for trend only, never as diagnostic evidence | | | Blocking if violated |
 | Recency window stated for Track C (what "current" means and as of when) | | | |
 | Novelty tier and GRADE reported independently (novelty ≠ certainty) | | | |
 | Single-language integrity (no 3rd language) | | | |
@@ -1217,6 +1408,10 @@ variable. Anything not linked to it is **untouched** and is NOT rewritten.
 - Collapse the affected **P5 decision tree** to the now-selected arm; keep the rest intact.
 - If a discriminating test came back **negative and eliminated the leading candidate**, or a new
   finding does not fit any current candidate → re-enter **P2c** with the updated phenotype vector.
+- If the new datum is a **prior value** of an existing parameter → recompute the personal
+  baseline and rate of change; a trend can flip a "normal" result into a signal.
+- If it explains an item on the **residue list** → close it explicitly and re-test whether the
+  remaining residue still forms a pattern.
 - **Frontier re-check:** if > 6 months since the last run, re-run **Track C** only (new approvals,
   new trials, guideline updates, new entities) and report it as a diff — a plan can go stale
   without the patient changing at all.
@@ -1246,17 +1441,18 @@ version and a changelog line. Preserve prior versions (never silently overwrite)
 
 **Focused modes (M0, M2–M11) — short block, only what ran:**
 ```
-CLINICAL-ASSISTANT v6.3 · [M#·NAME]
+CLINICAL-ASSISTANT v6.5 · [M#·NAME]
 Question: [what was asked] | Sources: [n] ([n_en] EN / [n_es] ES) | Window: [years, as of date]
 Novelty: [N0 n · N1 n · N2 n · N3 n]  |  Guideline anchor: [societies cited]
 Not covered (available on request): [phases skipped — e.g. board, plan, QA]
+📋 Open requests: [n items — what would sharpen this answer]
 Files: [evidence-brief / evidence-synthesis / frontier-scan / .bib / pdf]
 ⚠️ DRAFT — Requires licensed professional review.
 ```
 
 **Full case (M1):**
 ```
-CLINICAL-ASSISTANT v6.3 · M1·CASE · DELIVERY
+CLINICAL-ASSISTANT v6.5 · M1·CASE · DELIVERY
 [✓] P1 Case (+ hinge variables) · P2–3 Evidence ([N] sources, tracks A/B/C, GRADE)
 [·] P2c Deep research: [NOT TRIGGERED — why] / [RAN — n cycles, stop rule, [N] candidates]
 [✓] P4 Deliberation (13-archetype board + hinge analysis) · P5 Plan ([UNCONDITIONAL/CONDITIONAL])
@@ -1267,6 +1463,8 @@ Novelty content: [N0: n · N1 beyond-guideline: n · N2 trials: n · N3 excluded
 Recency window: evidence current as of [date]; frontier scan window [x months]
 Files: clinical-case · raw-evidence · [deep-research-memo] · grade-evidence+.bib · deliberation ·
        clinical-plan · clinical-report (pdf/docx/md) · qa-report  [+ update-[date] if P8 ran]
+📋 OPEN REQUESTS: [n items — data / decisions / access still needed from you]
+Unexplained residue: [findings no hypothesis accounts for — or "none"]
 Fallbacks: [list missing connectors, if any]
 ⚠️ DRAFT — Requires licensed professional review before any clinical application.
 ```
@@ -1284,8 +1482,40 @@ literature confirmation (`LOOK UP, DON'T GUESS`).
 | `scripts/clinical_patterns.py` | P1 exposure history · P2c Step 2 | Named syndrome triads · occupational exposures with latency, at-risk trades, key findings and workup · red-flag differentials · triad-based differential builder |
 | `scripts/pharmacology_ref.py` | P2 §2.4 | CYP/UGT substrate–inhibitor–inducer roles · curated critical interaction pairs with mechanism, severity, management and ★ evidence · narrow-therapeutic-index list |
 | `scripts/roc_analysis.py` | P3 §3.5 | AUC with bootstrap 95% CI · Youden-optimal cutoff with its sens/spec |
+| `scripts/verify_citations.py` | P3 §3.1 | Resolves every PMID/DOI against PubMed + CrossRef and compares title/year to the claim. **Needs network; fails closed** — never reports an unchecked citation as verified |
+| `scripts/score_eval.py` | evaluation | Aggregates `eval/cases/*/score.json` into a report card with stop-the-line conditions and version-over-version comparison |
+| `references/appraisal-instruments.md` | P2 §2.3 · P3 §3.6 | AGREE II · QUADAS-2 · RoB 2 · ROBINS-I · AMSTAR-2 · reporting standards, with where each attaches |
+| `references/specialty-packs.md` | P1 · P2 · P2c | 13 packs: authoritative bodies, must-not-miss lists, named criteria, classic mimics |
+| `eval/README.md` · `eval/rubric.md` | evaluation | Case sourcing, run protocol, bias-injection test, scoring rubric |
+| `scripts/validate_skill.py` | maintenance | Structural linter — run after every edit to this skill. Checks the 1024-char description limit, fences, table shape, dangling §-refs, phase/mode integrity, version consistency, and 16 safety invariants |
 
 Run `--help` on any of them for the full argument list.
+
+---
+
+## Measuring whether this actually works
+
+Everything above is reasoned design. Reasoning produces a *plausible* system, not a verified
+one — and the published literature on clinical LLMs documents a persistent **knowledge–practice
+gap**: systems that score near-perfect on exam-style benchmarks still fail on messy real cases.
+
+`eval/` is how the gap gets measured for this skill: 20 cases with known answers, scored with
+`eval/rubric.md`, aggregated by `scripts/score_eval.py`, re-run on every version bump.
+
+Three rules that make the measurement honest:
+1. **Establish the baseline before changing anything.** Without it, "this version feels better"
+   is all you will ever have.
+2. **Any SERIOUS or CRITICAL harm finding stops the release** and is never averaged against
+   good results — the harm lands on one patient; the correctness is distributed.
+3. **Track overconfidence, not only accuracy.** A version that gets more accurate *and* more
+   overconfident has probably got worse.
+
+Run the **bias-injection test first** (`eval/README.md`): P2c RULE 0 claims that withholding
+prior labels prevents anchoring, and that claim has never been verified. Feed a case with a
+plausible but *wrong* prior diagnosis and see whether the skill still reaches the right answer.
+
+**These are engineering targets for a research-draft tool. They are not clinical performance
+claims and must never be presented as such.**
 
 ---
 
@@ -1297,6 +1527,13 @@ pitfalls), §2.4 (bidirectional interaction analysis, on-target vs off-target ad
 screening, validated risk-score pairing) and P2c (rarest-feature-first, regression, trigger and
 latency heuristics) are **adapted** from the **ToolUniverse** skill collection
 (Mims Lab, Harvard Medical School — https://github.com/mims-harvard/ToolUniverse), Apache-2.0.
+
+The personal-baseline / rate-of-change reasoning, the episodic-presentation intake shape, the
+residue rule ("investigate what looks like error"), and the OPEN REQUESTS channel are adapted
+from Ian Rowan's n=1 case study on episodic Graves' disease (Data Science Collective, 2026),
+which found that deviation from a personal baseline detected episodes ~3 weeks before
+absolute values or symptoms did. Adapted as **reasoning discipline only** — this skill builds
+no predictive models and makes no n=1 generalisation.
 
 The three bundled scripts are **derived works** under Apache-2.0; see `NOTICE.md` for the
 required attribution and for the list of modifications, including a bug fix to
