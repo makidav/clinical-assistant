@@ -14,14 +14,24 @@ description: >
   prescription, or substitute for a licensed professional.
 license: CC-BY-4.0
 metadata:
-  version: "6.8"
+  version: "6.9"
   self-contained: true
   integrates: 28 embedded capabilities + 13-archetype board + 11-mode intent router
   language: bilingual EN+ES
   bundled: "scripts/clinical_patterns.py · scripts/pharmacology_ref.py ·
     scripts/roc_analysis.py · scripts/validate_skill.py · scripts/score_eval.py (offline) ·
     scripts/verify_citations.py (needs network) · references/ · eval/"
-  changelog: "6.8 — frame audit for inherited diagnoses and multi-meaning markers (§2.0a Rules 3-4); named interim interventions with GRADE; frequency ranges instead of point figures (§3.5b); reports document the resolved differential. Exclusion audit and nominated-differential rules promoted from P2c to P2
+  changelog: "6.9 — case #12 retrospective audit (real outcome available post-hoc) surfaced
+    two blind spots not caught by v6.8: (1) a unifying diagnosis was accepted as explaining a
+    decades-old finding without checking whether that diagnosis is epidemiologically plausible
+    at the age/context the old finding occurred in — added §2.0a Rule 5 (base-rate plausibility
+    check for retroactively-unified timelines, dual-pathology alternative required when rare);
+    (2) a reported treatment-response magnitude was credited to an intervention without
+    checking it against the trial/real-world evidence already gathered — added a P8 §8.3 check
+    (response magnitude/direction vs cited evidence; indicated-to-started gap surfaced). 2 new
+    QA gates (P7 table). Both rules generalise beyond the triggering case (retroactive unifying
+    diagnoses; any P8 treatment-response update) — not case-specific patches.
+    6.8 — frame audit for inherited diagnoses and multi-meaning markers (§2.0a Rules 3-4); named interim interventions with GRADE; frequency ranges instead of point figures (§3.5b); reports document the resolved differential. Exclusion audit and nominated-differential rules promoted from P2c to P2
     (they now run in every case, not only diagnostic odysseys); P2b imaging memo made
     mandatory; expected natural course separated from red flags in P5; psychiatry referrals
     now name what to assess. 8 new QA gates.
@@ -52,7 +62,7 @@ metadata:
     loop-back + 4 new P7 QA gates."
 ---
 
-# Clinical-Assistant v6.8 — Virtual Clinical Team
+# Clinical-Assistant v6.9 — Virtual Clinical Team
 
 > ⚠️ **SAFETY:** Research/decision-support DRAFTS only. Never a diagnosis, prescription, or
 > consultation substitute. Every output marked **DRAFT — REQUIRES QUALIFIED CLINICAL REVIEW**.
@@ -811,6 +821,47 @@ picture?* Then retrieve the answer rather than recalling it (`LOOK UP, DON'T GUE
 differential, that entity is added and either tested or explicitly excluded with a reason.
 `β2-microglobulin ↑↑ + splenomegaly + adenopathy` opens a lymphoproliferative line regardless of
 what other diagnosis is already established.
+
+#### Rule 5 — A diagnosis that unifies old and new findings must clear a plausibility check, not just a fit check
+
+When a "final" diagnosis is applied retroactively to a finding from months or years earlier — a
+biopsy from 2015 folded into a diagnosis made in 2024, a lab abnormality from adolescence
+attributed to a disease usually diagnosed in the 60s — fit is not enough. The candidate must
+also clear a **base-rate plausibility check** for the age/context the earlier finding occurred in.
+
+**Do this whenever a current diagnosis is offered as the explanation for a finding from a
+different point in the timeline:**
+1. Note the age/date/context of the earlier finding.
+2. Retrieve the typical age-of-onset, typical latency, or typical population for the diagnosis
+   being applied to it (`LOOK UP, DON'T GUESS`) — the number for the population the earlier
+   finding actually belongs to, not a general sense of the disease.
+3. State explicitly whether the finding, at that age/context, is common, rare-but-reported, or
+   essentially unreported for that diagnosis.
+4. If rare-but-reported or essentially unreported: name at least one alternative explanation for
+   the earlier finding — most often a **separate, earlier, correctly-made diagnosis that the
+   current disease was later superimposed on** ("dual pathology"), not a single continuous
+   process misread for years.
+
+> **The example that teaches the rule.** A 60-year-old is diagnosed with wild-type ATTR cardiac
+> amyloidosis in 2024, and a hypertrophic septum found in 2004 (age ~40) is folded into the same
+> narrative as "20 years of missed amyloidosis." Wild-type ATTR has a mean age at diagnosis of
+> 74–75 and is diagnosed at ≤65 in under 5% of registry cases — and even that subgroup is
+> typically recognised within a year of symptom onset, not two decades later. The 2004 finding
+> is far more consistent with a **primary sarcomeric hypertrophic cardiomyopathy, correctly
+> diagnosed at the time**, onto which an age-related wild-type ATTR process was **later
+> superimposed** — a materially different clinical story than "one disease missed for 20 years,"
+> with different implications for whether a sarcomeric genetic evaluation is still owed.
+
+**This does not overturn a diagnosis that fits the current presentation.** It only asks whether
+the diagnosis explains the *entire* timeline being credited to it, or only the recent part — and
+reports the answer explicitly rather than letting a tidy unifying narrative go unchecked.
+`Reconciliation logged: [old finding] — [consistent with current dx at that age: yes/rare/no] →
+[alternative explanation named, or none needed]`
+
+This extends Rule 3's reconciliation log across *time* rather than across *labels*: Rule 3 asks
+whether a given diagnosis explains the presenting picture; Rule 5 asks whether a diagnosis
+reached now explains a finding from elsewhere in the timeline, at the base rate for when it
+occurred.
 
 ### 2.0 — Three separate search tracks (run ALL; do not merge them)
 
@@ -1866,6 +1917,8 @@ audit only the rows for the phases executed, plus the four router rows below. Ne
 | Recency window stated for Track C (what "current" means and as of when) | | | |
 | Novelty tier and GRADE reported independently (novelty ≠ certainty) | | | |
 | Single-language integrity (no 3rd language) | | | |
+| **If a current diagnosis is credited with explaining an earlier finding: base-rate plausibility checked for that finding's age/context (§2.0a Rule 5), reconciliation logged** | | | Blocking if violated |
+| **If P8 ran with a reported treatment response: magnitude/direction checked against the cited evidence base (§8.3); deviations flagged as residue, not silently credited to the intervention; treatment-indicated-to-started gap surfaced if present** | | | Blocking if violated |
 
 > **Coverage failure vs calibration failure.** A hypothesis that was never listed cannot be
 > mis-calibrated — it is simply absent, and absence leaves no trace in the confidence figures.
@@ -1940,6 +1993,16 @@ variable. Anything not linked to it is **untouched** and is NOT rewritten.
   baseline and rate of change; a trend can flip a "normal" result into a signal.
 - If it explains an item on the **residue list** → close it explicitly and re-test whether the
   remaining residue still forms a pattern.
+- If the new datum is a **reported response to treatment** (a lab trend, imaging change, symptom
+  score) → before crediting it to the intervention, retrieve the **expected magnitude and
+  direction** of response to that specific intervention from the evidence already gathered in
+  P2/P3 (trial data, real-world cohorts) and compare. A response that is *larger*, *smaller*,
+  *faster*, or in the *opposite direction* from what the cited evidence predicts is a **residue**,
+  not a confirmation — name at least one alternative driver (a concurrent therapy change,
+  diuresis/volume status, assay variation, natural fluctuation) before accepting the intervention
+  as the sole explanation. Also check the gap between when the intervention was *indicated* and
+  when it was actually *started*: an unexplained multi-month gap is itself a finding to surface,
+  not to pass over in silence.
 - **Frontier re-check:** if > 6 months since the last run, re-run **Track C** only (new approvals,
   new trials, guideline updates, new entities) and report it as a diff — a plan can go stale
   without the patient changing at all.
@@ -1969,7 +2032,7 @@ version and a changelog line. Preserve prior versions (never silently overwrite)
 
 **Focused modes (M0, M2–M11) — short block, only what ran:**
 ```
-CLINICAL-ASSISTANT v6.8 · [M#·NAME]
+CLINICAL-ASSISTANT v6.9 · [M#·NAME]
 Question: [what was asked] | Sources: [n] ([n_en] EN / [n_es] ES) | Window: [years, as of date]
 Novelty: [N0 n · N1 n · N2 n · N3 n]  |  Guideline anchor: [societies cited]
 Not covered (available on request): [phases skipped — e.g. board, plan, QA]
@@ -1980,7 +2043,7 @@ Files: [evidence-brief / evidence-synthesis / frontier-scan / .bib / pdf]
 
 **Full case (M1):**
 ```
-CLINICAL-ASSISTANT v6.8 · M1·CASE · DELIVERY
+CLINICAL-ASSISTANT v6.9 · M1·CASE · DELIVERY
 [✓] P1 Case (+ hinge variables) · P2–3 Evidence ([N] sources, tracks A/B/C, GRADE)
 [·] P2c Deep research: [NOT TRIGGERED — why] / [RAN — n cycles, stop rule, [N] candidates]
 [✓] P4 Deliberation (13-archetype board + hinge analysis) · P5 Plan ([UNCONDITIONAL/CONDITIONAL])
