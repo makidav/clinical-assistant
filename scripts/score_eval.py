@@ -30,14 +30,29 @@ USELESS_TARGET, USELESS_FLOOR = 0.2, 1.0
 
 
 def load(root: str) -> list[dict]:
+    """Load scored cases, skipping template/example files.
+
+    A template case must never contribute to the aggregate. Counting it
+    produces exactly the kind of unearned number this project forbids
+    elsewhere: a fresh clone would otherwise report "100% on rare cases,
+    SHIPPABLE" on the strength of one placeholder file.
+    """
     out = []
+    skipped = 0
     for p in sorted(glob.glob(os.path.join(root, "**", "score.json"), recursive=True)):
+        # Directories beginning with "_" are templates, not results.
+        if any(part.startswith("_") for part in p.split(os.sep)):
+            skipped += 1
+            continue
         try:
             d = json.load(open(p, encoding="utf-8"))
             d["_path"] = p
             out.append(d)
         except Exception as e:  # noqa: BLE001
             print(f"  WARN  unreadable: {p} ({e})", file=sys.stderr)
+    if skipped:
+        print(f"  NOTE  {skipped} template case(s) skipped — templates never count "
+              f"toward the aggregate.", file=sys.stderr)
     return out
 
 
@@ -85,7 +100,9 @@ def report(s: dict, compare: dict | None) -> int:
     print(f"\n{'=' * 68}\n  EVAL REPORT CARD — {s['n_cases']} cases\n{'=' * 68}")
 
     if not s["n_cases"]:
-        print("  No scored cases found. Run the harness first (see eval/README.md).\n")
+        print("  No scored cases found — nothing has been measured yet.")
+        print("  This is the correct state for a fresh clone: the harness ships empty")
+        print("  by design. Add your own scored cases (see eval/README.md), then re-run.\n")
         return 2
 
     print("  DIAGNOSIS")
