@@ -3,10 +3,10 @@
 **An 8-phase clinical reasoning and medical evidence workflow for Claude, built to be verifiable rather than merely fluent.** It runs differential diagnosis, evidence appraisal, a 13-perspective clinical board, and treatment planning — and it refuses to state more confidence than the evidence underneath it supports.
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg?style=flat-square)](https://creativecommons.org/licenses/by/4.0/)
-![Version](https://img.shields.io/badge/version-6.8-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-6.9-blue?style=flat-square)
 ![Self-contained](https://img.shields.io/badge/dependencies-none-success?style=flat-square)
 ![Language](https://img.shields.io/badge/language-EN%20%7C%20ES-informational?style=flat-square)
-![QA gates](https://img.shields.io/badge/QA%20gates-60%20(28%20blocking)-orange?style=flat-square)
+![QA gates](https://img.shields.io/badge/QA%20gates-87%20(49%20blocking)-orange?style=flat-square)
 
 > ### ⚠️ Read this first
 > This skill produces **research and decision-support drafts for qualified clinicians**. It is **not** a medical device, does not diagnose, does not prescribe, and does not replace a licensed professional. Every output carries a DRAFT header. The engineering targets in this repository are software quality metrics — **they are not clinical performance claims and must never be quoted as such.**
@@ -83,7 +83,7 @@ Ask in plain language — *"busca estudios donde el CKM se trata con agonistas G
 | **P4 · Board** | 13 archetypes with declared blind spots | Structured disagreement; **deadlock is declared honestly**, not papered over |
 | **P5 · Plan** | conditional decision trees, workup sequencing, two-axis planning | Ordered **treatable-first**, not probability-first; when trajectory warrants it, disease-directed and comfort-directed arms are written in parallel — never one as the other's fallback |
 | **P6 · Report** | CARE/CONSORT-aware reporting | Traceable structure; novelty provenance stated |
-| **P7 · QA** | 88 gates, 48 blocking · 9-attack red team | Nothing ships that fails a blocking gate |
+| **P7 · QA** | 87 gates, 49 blocking · 9-attack red team | Nothing ships that fails a blocking gate |
 | **P8 · Update** | targeted re-run with diff | New data collapses the right branch; **frontier re-check at 6 months** — a plan goes stale without the patient changing |
 
 ### The 13-perspective board
