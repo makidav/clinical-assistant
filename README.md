@@ -3,7 +3,7 @@
 **An 8-phase clinical reasoning and medical evidence workflow for Claude, built to be verifiable rather than merely fluent.** It runs differential diagnosis, evidence appraisal, a 13-perspective clinical board, and treatment planning — and it refuses to state more confidence than the evidence underneath it supports.
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg?style=flat-square)](https://creativecommons.org/licenses/by/4.0/)
-![Version](https://img.shields.io/badge/version-6.7-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-6.8-blue?style=flat-square)
 ![Self-contained](https://img.shields.io/badge/dependencies-none-success?style=flat-square)
 ![Language](https://img.shields.io/badge/language-EN%20%7C%20ES-informational?style=flat-square)
 ![QA gates](https://img.shields.io/badge/QA%20gates-60%20(28%20blocking)-orange?style=flat-square)
@@ -27,6 +27,8 @@ This skill is built around one idea: *a clinician should be able to audit any st
 | "Order these tests" | Every test carries pre-test → post-test probability and is **dropped if it changes nothing** |
 | Guidelines ranked by brand | Guidelines appraised with **AGREE II**; diagnostic studies with **QUADAS-2** |
 | Findings that don't fit get discarded | The **residue list** — unexplained findings are tracked as signal, not noise |
+| Inherits "already ruled out" as fact | Every exclusion is **audited** — a normal coagulation panel does not exclude factor XIII deficiency |
+| Works forward from the diagnosis it was given | The differential is **rebuilt from presenting features first** — the anchor is strongest when the given diagnosis is correct |
 | One guess when data is missing | A **decision tree** with the missing variable named as the hinge |
 | Everything points toward more intervention | A **goals-of-care axis** runs parallel: disease-directed and comfort-directed arms written at equal depth |
 | Newer sounds better | **N0–N3 novelty ladder**: preprints inform the differential, never the plan |
@@ -74,14 +76,14 @@ Ask in plain language — *"busca estudios donde el CKM se trata con agonistas G
 |---|---|---|
 | **P0 · Router** | intent classification | Focused answers stay focused; safety **upshifts** are mandatory — a literature question containing a patient in danger abandons the mode |
 | **P1 · Intake** | structured anamnesis, red-flag screen, validated risk scores, specialty routing | Captures **occupational exposure with up-to-50-year latency**, **personal baselines and rate of change**, and a distinct intake shape for **episodic** presentations |
-| **P2b · Imaging** | native vision analysis | Conditional; feeds the board rather than standing alone |
+| **P2b · Imaging** | native vision analysis | Conditional but **mandatory when an image exists** — a decisive finding read informally is one nobody audited |
 | **P2 · Evidence** | 3 parallel tracks — diagnostic criteria, treatment thresholds, **frontier scan** | Guideline hierarchy, ≥3 sources, **conflicts surfaced not resolved silently**; bidirectional drug-interaction matrix |
 | **P2c · Deep research** | bounded phenotype-first loop | **Anti-anchoring**, rarest-feature-first, regression/trigger heuristics, dual-pathology check, hard 4-cycle budget with explicit stop rules |
 | **P3 · GRADE + appraisal** | citation gate, retraction gate, Bayesian test engine, AGREE II / QUADAS-2 / RoB 2 / ROBINS-I / AMSTAR-2 | The heart of the reliability layer — see below |
 | **P4 · Board** | 13 archetypes with declared blind spots | Structured disagreement; **deadlock is declared honestly**, not papered over |
 | **P5 · Plan** | conditional decision trees, workup sequencing, two-axis planning | Ordered **treatable-first**, not probability-first; when trajectory warrants it, disease-directed and comfort-directed arms are written in parallel — never one as the other's fallback |
 | **P6 · Report** | CARE/CONSORT-aware reporting | Traceable structure; novelty provenance stated |
-| **P7 · QA** | 71 gates, 37 blocking · 8-attack red team | Nothing ships that fails a blocking gate |
+| **P7 · QA** | 88 gates, 48 blocking · 9-attack red team | Nothing ships that fails a blocking gate |
 | **P8 · Update** | targeted re-run with diff | New data collapses the right branch; **frontier re-check at 6 months** — a plan goes stale without the patient changing |
 
 ### The 13-perspective board
@@ -169,7 +171,7 @@ Seven offline scripts, pure standard library, no API keys:
 | Script | Purpose |
 |---|---|
 | `verify_citations.py` | Citation + **retraction** gate. `--selftest` verifies the logic offline |
-| `validate_skill.py` | Structural linter — 39 safety invariants, install limits, cross-references, version consistency |
+| `validate_skill.py` | Structural linter — 53 safety invariants, install limits, cross-references, version consistency |
 | `score_eval.py` | Aggregates evaluation cases into a report card with stop-the-line conditions |
 | `score_bias.py` | Scores the bias-injection test — does the anti-anchoring rule actually hold? |
 | `clinical_patterns.py` | Syndrome triads, occupational exposures with latency, red-flag differentials |

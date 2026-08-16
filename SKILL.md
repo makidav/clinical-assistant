@@ -14,14 +14,18 @@ description: >
   prescription, or substitute for a licensed professional.
 license: CC-BY-4.0
 metadata:
-  version: "6.7"
+  version: "6.8"
   self-contained: true
   integrates: 28 embedded capabilities + 13-archetype board + 11-mode intent router
   language: bilingual EN+ES
   bundled: "scripts/clinical_patterns.py · scripts/pharmacology_ref.py ·
     scripts/roc_analysis.py · scripts/validate_skill.py · scripts/score_eval.py (offline) ·
     scripts/verify_citations.py (needs network) · references/ · eval/"
-  changelog: "6.7 — goals-of-care axis: functional trajectory in P1, palliative-parallel
+  changelog: "6.8 — frame audit for inherited diagnoses and multi-meaning markers (§2.0a Rules 3-4); named interim interventions with GRADE; frequency ranges instead of point figures (§3.5b); reports document the resolved differential. Exclusion audit and nominated-differential rules promoted from P2c to P2
+    (they now run in every case, not only diagnostic odysseys); P2b imaging memo made
+    mandatory; expected natural course separated from red flags in P5; psychiatry referrals
+    now name what to assess. 8 new QA gates.
+    6.7 — goals-of-care axis: functional trajectory in P1, palliative-parallel
     trigger (G1-G8), proportionality gate in §3.5, mandatory Ethicist/Patient-Advocate
     questions in P4, two-axis plan with parallel Arm A / Arm B in P5, red-team attack 8,
     12 new QA gates. Counterweights this skill's structural bias toward intervention.
@@ -48,7 +52,7 @@ metadata:
     loop-back + 4 new P7 QA gates."
 ---
 
-# Clinical-Assistant v6.7 — Virtual Clinical Team
+# Clinical-Assistant v6.8 — Virtual Clinical Team
 
 > ⚠️ **SAFETY:** Research/decision-support DRAFTS only. Never a diagnosis, prescription, or
 > consultation substitute. Every output marked **DRAFT — REQUIRES QUALIFIED CLINICAL REVIEW**.
@@ -612,6 +616,22 @@ Required specialist types: [specialties]
 CT slice, ECG, dermatoscopy, fundoscopy, ultrasound, histology, or any medical image).
 If no image is present, skip this section entirely — do not mention it.
 
+> **The memo is mandatory, not optional.** An attached image is often the highest-weight
+> datum in the case — the finding that tips the differential. Reading it informally
+> "alongside the text" produces the right impression and loses everything that makes the
+> impression auditable: the systematic description, the stated confidence, the limitations of
+> a photograph versus an examination, the alternatives the appearance is also compatible with,
+> and a discrete artifact the board can challenge.
+>
+> **The rule:** if an image is attached, produce the imaging memo as a distinct output before
+> it influences the differential — even when the finding seems obvious, and especially then.
+> A decisive finding that entered through the informal door is a decisive finding nobody
+> audited. P7 treats a missing memo as a blocking gap.
+>
+> Clinical photographs carry their own limits: colour and lighting are unreliable, scale is
+> often absent, texture and temperature cannot be assessed, and a single time point says
+> nothing about evolution. State these — they are part of the finding.
+
 ### Imaging gate: PHI check first
 Before analyzing content, scan the image for burnt-in identifiers (name, DOB, MRN, date,
 institution). If found → **stop** → ask the user to crop or redact before continuing.
@@ -667,6 +687,130 @@ members The Architect and The Empiricist should explicitly reference imaging fin
 
 > All results normalized to user's language; tag original source language (en/es).
 > If P2b was run, note imaging findings in the evidence header for board context.
+
+### 2.0a — EXCLUSION AUDIT + NOMINATED DIFFERENTIAL *(runs in EVERY case, before any search)*
+
+Two rules that must fire on routine cases, not only on diagnostic odysseys. Both defend
+against the same failure: **inheriting someone else's conclusion as if it were data.**
+
+#### Rule 1 — "Already ruled out" is a claim, not a fact
+
+A case summary saying *"haematology ruled out coagulopathies"*, *"cardiology excluded ischaemia"*
+or *"imaging was normal"* is a **summary of someone's reasoning**, not a set of results. Before
+accepting any exclusion, ask three questions:
+
+| Ask | Why |
+|---|---|
+| Which **specific test** was done? | A category is not a test |
+| Is that test **adequately sensitive** for each entity the category contains? | This is where the failure lives |
+| Was it done at the **right time** in the disease course, with the right sample and technique? | A correctly chosen test at the wrong moment reads as negative |
+
+> **The example that teaches the rule.** "Haematology ruled out coagulopathies" is almost
+> certainly a normal PT, aPTT, platelets and fibrinogen. That panel is **normal in factor XIII
+> deficiency** — FXIII acts after fibrin formation, so it is invisible to routine coagulation
+> screening and needs a specific activity assay or clot-solubility test. The same summary can
+> also hide mild von Willebrand disease, where the aPTT is frequently normal.
+> **The exclusion excluded nothing for the two entities that mattered most.**
+
+Any exclusion that fails these questions is **reopened** and carried forward as a live
+hypothesis. Record it:
+`Reopened: [entity] — prior exclusion inadequate because [reason] → discriminating test [x]`
+
+This is the P2-level counterpart of §2c.5, which audits prior *diagnostic labels*. That one
+lives inside the deep-research loop and only runs when P2c is triggered — but **the failure it
+prevents happens in every case**, most easily in the ones that converge quickly, because a
+confident early answer removes the motive to check.
+
+#### Rule 2 — Name the entities; a category is not a differential entry
+
+Write differentials as **named entities with their discriminating test**, never as groupings.
+A category is a place to stop thinking; a name is a place to start testing.
+
+| ✗ Category (unfalsifiable) | ✓ Named entity (testable) |
+|---|---|
+| "coagulopathies" | factor XIII deficiency *(PT/aPTT normal — needs specific assay)* · von Willebrand disease *(aPTT often normal)* · fibrinogen disorders |
+| "autoimmune causes" | SLE *(ANA, ENA)* · antiphospholipid syndrome *(lupus anticoagulant, aCL, anti-β2GPI)* |
+| "ANCA vasculitis" | granulomatosis with polyangiitis *(PR3-ANCA)* · microscopic polyangiitis *(MPO-ANCA)* · EGPA *(eosinophilia, asthma)* — naming the spectrum is not naming the entity |
+| "lymphoproliferative disorder" | DLBCL · follicular · mantle cell · Hodgkin · CLL/SLL — each with the biopsy or flow that separates it |
+| "connective tissue disease" | Ehlers-Danlos *(clinical criteria, Beighton)* · Marfan · osteogenesis imperfecta |
+| "drug causes" | name each drug on the list and its specific mechanism |
+| "psychiatric/functional" | dermatitis artefacta · factitious disorder · malingering — each distinguished by different evidence |
+
+**Test:** could a clinician act on this line? If it names no test, it is not a differential
+entry — it is a category label standing in for the work.
+
+Applies to every mode that produces a differential, and to P6 reporting: a formal report lists
+entities by name. Grouping them is how an unexamined exclusion survives into the final document.
+
+#### Rule 3 — Reconstruct before you inherit *(the M1-level counterpart of P2c RULE 0)*
+
+When a case arrives with a diagnosis **already established** — a confirmed marrow biopsy, a
+referral naming the disease, a discharge summary — the natural move is to work *forward* from
+that frame and ask only what is still missing inside it. That move loses whatever the frame
+does not explain.
+
+**Do this before merging with the given frame:**
+
+1. **List the presenting features** as they would appear to someone who had never heard the
+   established diagnosis: the syndrome, not the label.
+2. **Generate the differential from those features alone.** Named entities, per Rule 2.
+3. **Only then** compare against the frame the case arrived with.
+4. **Two things must be reported, never dropped silently:**
+   - Findings the given frame does **not** explain → residue list
+   - Entities in the independent differential the given frame would have **excluded by
+     assumption** → each addressed explicitly, with a reason or a test
+
+> **The example that teaches the rule.** A case arrives with confirmed CMML-1 (marrow biopsy,
+> NGS done) and asks about an unusual vascular/renal picture. Working forward from CMML, the
+> differential becomes "which histiocytosis?". Reconstructing from the presenting syndrome —
+> **fever + weight loss + 15 cm splenomegaly + mesenteric adenopathy + β2-microglobulin
+> 14.83 mg/L** — puts **lymphoproliferative disorder, DLBCL first**, at the top of any
+> haematology differential. The established diagnosis was correct *and* the reconstruction was
+> still owed: a confirmed diagnosis does not exclude a second one, and it is not a reason to
+> skip the step.
+
+**Log the reconciliation** so a reviewer can see it happened, in one block:
+```
+Given frame: [diagnosis as received] | Source: [who established it, on what basis]
+Independent differential from presenting features: [named entities]
+Explained by the given frame: [...]  |  NOT explained — still live: [...]
+```
+
+> **The counterintuitive part: the risk is highest when the given diagnosis is *correct*.** A
+> wrong label invites suspicion; a right one is maximally persuasive. A correct *partial*
+> diagnosis licenses nothing about the rest of the picture — being true is not the same as
+> being sufficient.
+
+**This is the same failure P2c RULE 0 was written to prevent** — but RULE 0 only fires when the
+deep-research loop is triggered. A case that arrives *already partly solved* looks like it
+needs no rediscovery, which is exactly when the anchor is strongest and least visible. **The
+reconstruction is mandatory in every mode that produces a differential**, however advanced the
+data supplied. It is **one bounded pass**, not a second workflow: list the features, generate
+the differential, reconcile, log. It does not require triggering P2c.
+
+#### Rule 4 — A biomarker means different things in different frames
+
+An abnormal value read only through the frame already in play stops being evidence and becomes
+confirmation. For every markedly abnormal marker, state what it would mean **under each live
+candidate**, not only the active one.
+
+| Marker | Frame A reading | Other frames it should also open |
+|---|---|---|
+| **β2-microglobulin** ↑↑ | non-specific reactant in a myeloid neoplasm | **tumour burden in lymphoproliferative disease** · myeloma · chronic inflammation · renal impairment (it is renally cleared — check eGFR before interpreting) |
+| **LDH** ↑↑ | tissue turnover, non-specific | lymphoma burden · haemolysis · tumour lysis · infarction |
+| **Ferritin** ↑↑↑ | acute-phase reactant | HLH/MAS · Still disease · iron overload · hepatic injury |
+| **Hypercalcaemia** | dehydration | malignancy (PTHrP, lytic) · granulomatous disease · hyperparathyroidism |
+| **Eosinophilia** | allergy/atopy | parasitic infection · drug reaction · EGPA · clonal (myeloid/lymphoid) · adrenal insufficiency |
+
+The table is **illustrative, not exhaustive** — it teaches the move, it does not enumerate it.
+The operative instruction is the question, asked of every markedly abnormal value: *what else
+is this classically a marker of, and does any of those alternatives fit the rest of the
+picture?* Then retrieve the answer rather than recalling it (`LOOK UP, DON'T GUESS`).
+
+**Trigger rule:** when a marker's *alternative* reading names an entity absent from the current
+differential, that entity is added and either tested or explicitly excluded with a reason.
+`β2-microglobulin ↑↑ + splenomegaly + adenopathy` opens a lymphoproliferative line regardless of
+what other diagnosis is already established.
 
 ### 2.0 — Three separate search tracks (run ALL; do not merge them)
 
@@ -1183,6 +1327,26 @@ ignores the operating point (always report sens/spec at the cutoff actually used
 chosen and evaluated on the same data is optimistic; spectrum bias inflates performance
 measured on clearly-sick vs clearly-well subjects.
 
+### 3.5b Reported frequencies carry a range, not a point
+
+Prevalences, mutation frequencies, response rates and complication rates **vary materially
+between cohorts** — by referral pattern, ascertainment method, era, assay, and population.
+Quoting one study's figure as *the* number imports that cohort's selection bias silently.
+
+Before stating any frequency in an output:
+- Check whether **other cohorts report materially different figures**. If they do, give the
+  range and name the reason for the spread (referral vs population-based, different assay
+  sensitivity, different diagnostic criteria, different era).
+- Format: `~X–Y% depending on cohort [refs]` — or a single figure **with its source and
+  population named** when only one credible estimate exists.
+- Flag when a figure comes from a **highly selected series** (tertiary referral, registry of
+  confirmed cases): those systematically overestimate frequency in unselected patients, and
+  that is a pre-test probability error, which propagates into §3.5.
+
+A single number in a clinical report reads as settled fact. If it is not settled, the range
+*is* the finding, and a reader comparing your figure against a different published one should
+find that difference already acknowledged rather than discovering it as a discrepancy.
+
 ### 3.6 Source appraisal *(instruments, not impressions — see `references/appraisal-instruments.md`)*
 
 GRADE already asks "risk of bias?". These are **how that question gets answered
@@ -1366,6 +1530,59 @@ DECISION POINT: [hinge variable, e.g., vaccine/polysaccharide response]
 ```
 The interim action must be the safest defensible step, not a guess at the final arm.
 
+**The interim arm carries the same standard of specificity as every other arm.** "Continue
+supportive care", "monitor closely" or "optimise symptom control" are not interim plans — they
+are the absence of one, written in a voice that sounds like one. The waiting period is often
+where the patient's symptom burden actually lives, and it can last days to weeks.
+
+For every conditional tree, actively search for a **named** interim intervention:
+```
+INTERIM (while [hinge variable] is pending — expected [timeframe])
+  Intervention: [named drug/measure, route, and who titrates it — never a dose prescribed here]
+  Purpose: [symptom control / inflammation control / stabilisation — be specific]
+  Evidence: [citation + GRADE certainty, same standard as the definitive arms]
+  Why it does not compromise the pending diagnosis: [explicit — this is the usual objection]
+  Reassess at: [trigger or date] · Stop if: [criterion]
+```
+
+**If no interim intervention is appropriate, say so and say why** — "no interim
+pharmacological bridge is indicated because X would obscure the pending biopsy" is a real
+plan. Silence is not. **A blank interim arm is a P7 gap**, not a stylistic choice.
+
+Two standing cautions for this arm: an interim agent must not compromise the pending
+diagnostic test (steroids before lymphoma biopsy being the classic trap), and a bridge is a
+bridge — state explicitly that it is not the definitive treatment and name what ends it.
+Where a bridge is well described for acute control but poorly supported for maintenance, say
+both things; that distinction is usually the whole clinical question.
+
+### The interim arm carries the same burden of proof as the definitive one
+
+A decision tree whose pending branch says *"continue supportive care"* or *"do not delay the
+workup"* has not planned that branch — it has deferred it. And the pending branch is where the
+patient actually lives while the hinge test is being arranged: days to weeks of active disease.
+
+**Requirements — identical to any other recommendation:**
+- **Name the intervention**, with drug, dose, route and duration where one applies. "Supportive
+  care" is a category, not a plan (§2.0a Rule 2 applies here too).
+- **Cite it** with its GRADE certainty. An interim step is not exempt from §3.1 or §3.6.
+- **State its goal and its stopping point:** what it is meant to achieve, and what would make
+  you stop it or escalate.
+- **State what it must not do:** whether it could compromise the pending diagnostic test —
+  the single most important question about any bridge therapy.
+- If **no interim intervention is warranted**, say so explicitly and say why. Deliberate
+  watchful waiting is a decision; silence is an omission.
+
+> **The trap this closes.** In a systemically inflamed patient awaiting confirmatory biopsy,
+> a corticosteroid bridge may be the right interim step — it can control fever and acute-phase
+> response while the definitive diagnosis is pending. But it also carries a specific hazard
+> that only appears if you ask: **steroids can alter the histology of the very biopsy you are
+> waiting for**, particularly in lymphoproliferative and granulomatous disease. Naming the
+> intervention forces that question. "Continue supportive care" never does.
+>
+> Note the asymmetry that makes this worth stating: the evidence for an intervention as a
+> **short bridge** and as **maintenance** can point in opposite directions. Cite the interim
+> use for interim use, and label it as such.
+
 ### The two axes of the plan *(when the palliative-parallel trigger has fired)*
 
 A decision tree that branches only on diagnostic uncertainty answers half the question. The
@@ -1471,6 +1688,34 @@ Interventions (single path OR decision tree per gate above):
 
 **Sections 2–8:** Detailed pharmacology (dose/mechanism/contraindications/**interaction matrix from P2**) ·
 Non-pharmacological (lifestyle/diet/PT/psych) · Monitoring (labs/vitals/imaging + thresholds) ·
+### Expected natural course *(state it — separately from the red flags)*
+
+Red flags say what is *wrong*. This says what is **normal**, and its absence causes a specific
+error: an expected fluctuation gets read as treatment failure, and the response is escalation
+nobody needed.
+
+```
+Expected course: [what improvement looks like, and over what timeframe]
+Expected setbacks: [relapses/flares that are PART of the course — with their typical triggers]
+Timeline: [when to expect first response · plateau · realistic best outcome]
+NOT expected — escalate: [what genuinely signals failure or a wrong diagnosis]
+```
+
+The distinction is the whole point. In a stress-linked condition, a mild relapse during exams
+or a relationship crisis is **the disease behaving as described** — it warrants support and
+reinforcement of the plan, not a new workup and not a conclusion that the treatment failed.
+Saying so in advance protects the patient from an escalation cascade and protects the plan
+from being abandoned just as it starts working.
+
+Give it to the patient in their own terms: *what will get better, roughly when, what setbacks
+are normal, and the specific things that mean "call us".* A patient who knows a flare is
+expected experiences it as a bump; a patient who does not experiences it as the treatment
+failing.
+
+Where the evidence supports it, state the pattern with its uncertainty (§3.2 calibration) —
+and where it does not, say the course is not well characterised rather than inventing a
+timeline.
+
 Patient education (3–5 key points) · Follow-up schedule · Cohort/prognostic context ·
 Evidence summary (GRADE from P3) · References (BibTeX from P3).
 
@@ -1500,8 +1745,18 @@ data_class: synthetic/de-identified/aggregate | evidence_level: [GRADE]
 source_languages: [en, es] | review_required: [specialist types]
 ```
 
+> **Document the differential that was resolved, not only the part still open.** A working
+> chat can say "infection was already ruled out"; a clinical report cannot. A reference report
+> lists the categories worked — infectious, autoimmune, neoplastic, drug-related — with the
+> named entities under each and the finding that excluded them. Three reasons this matters:
+> the reader can audit the reasoning instead of trusting it; an inadequate exclusion becomes
+> visible (§2.0a Rule 1); and the document works as a piece of the medical record rather than
+> a note-to-self. Keep it compact — a line per entity with its excluding finding — but do not
+> omit it because the work was done earlier.
+
 **Sections:** Introduction & context · Clinical presentation (de-ID) · Evidence review (P3 GRADE) ·
 [Differential expansion (P2c) — if it ran: candidate table, prior-label audit, discarded-as-unfalsifiable] ·
+**Full differential worked — including entities already excluded, with what excluded them** ·
 Diagnostic deliberation (P4 board) · Therapeutic plan (P5) · Discussion & limitations
 [include novelty provenance: which N1–N3 findings shaped the reasoning and how] ·
 Conclusions · References (BibTeX) · Appendices (GRADE table · scenario tree · QA log ·
@@ -1537,7 +1792,7 @@ audit only the rows for the phases executed, plus the four router rows below. Ne
 | DRAFT header on all P5/P6 docs | | | |
 | SMART goals present | | | |
 | Drug interaction matrix addressed | | | |
-| If image was provided: P2b imaging memo present and fed into P4 board | | | |
+| If image was provided: P2b imaging memo present and fed into P4 board | | | Blocking if absent |
 | P2c trigger gate evaluated and logged (fired or not, with reason) | | | Blocking if absent |
 | **No N3 (frontier) item used as a treatment recommendation** | | | Blocking if violated |
 | Every N1 item labeled BEYOND-GUIDELINE + specialist named + non-applicable population stated | | | Blocking if violated |
@@ -1557,6 +1812,23 @@ audit only the rows for the phases executed, plus the four router rows below. Ne
 | Trial search covered CT.gov + EU CTIS + ISRCTN (+ regional registries) | | | Fix |
 | Every computed number was actually calculated, not narrated | | | Blocking if violated |
 | Workup sequence ordered treatable-first with stated rationale | | | |
+| **Every inherited exclusion audited (§2.0a Rule 1) — "ruled out" never accepted at face value** | | | Blocking if violated |
+| Inadequate exclusions reopened with a named discriminating test | | | Blocking if violated |
+| **Differential lists NAMED entities, not categories (§2.0a Rule 2)** | | | Blocking if violated |
+| Every differential entry carries a discriminating test | | | Blocking if violated |
+| If an image was attached: formal P2b memo produced BEFORE it influenced the differential | | | Blocking if violated |
+| Image limitations stated (colour, scale, texture, single time point) | | | Fix |
+| Expected natural course stated separately from red flags | | | Fix |
+| Expected setbacks distinguished from genuine treatment failure | | | Fix |
+| **If the case arrived with an established diagnosis: independent differential rebuilt from presenting features BEFORE merging (§2.0a Rule 3)** | | | Blocking if violated |
+| Frame reconciliation logged — what the given diagnosis explains and what remains live | | | Blocking if violated |
+| Every markedly abnormal value checked against its other canonical meanings (§2.0a Rule 4) | | | Blocking if violated |
+| **Interim arm names a specific intervention with evidence + GRADE, or states why none is indicated** | | | Blocking if violated |
+| Interim agent checked against the pending diagnostic test it could obscure | | | Blocking if violated |
+| Interim bridge explicitly distinguished from definitive treatment, with a stated end point | | | Fix |
+| Reported frequencies given as ranges across cohorts, or single figure with population named (§3.5b) | | | Fix |
+| Figures from highly selected series flagged as such | | | Fix |
+| Report documents the full differential worked, including entities already excluded and what excluded them | | | Fix |
 | Palliative-parallel trigger evaluated and logged (fired or not, with reason) | | | Blocking if absent |
 | **If trigger fired: Arm A and Arm B both written, at equal depth, in the same document** | | | Blocking if violated |
 | If trigger fired: concurrent (early palliative alongside disease-directed) explicitly considered | | | Blocking if violated |
@@ -1595,7 +1867,13 @@ audit only the rows for the phases executed, plus the four router rows below. Ne
 | Novelty tier and GRADE reported independently (novelty ≠ certainty) | | | |
 | Single-language integrity (no 3rd language) | | | |
 
-### Final red-team (7 attacks)
+> **Coverage failure vs calibration failure.** A hypothesis that was never listed cannot be
+> mis-calibrated — it is simply absent, and absence leaves no trace in the confidence figures.
+> Well-calibrated confidence across a differential says nothing about what that differential
+> omitted. **Audit coverage first, then calibration:** check §2.0a Rules 2–4 before taking
+> comfort in the numbers.
+
+### Final red-team (9 attacks)
 1. Most load-bearing dx hypothesis — what contradicts it?
 2. Primary GRADE evidence overstated by one level — does plan survive?
 3. Plan at 60% adherence — does it still work?
@@ -1609,6 +1887,10 @@ audit only the rows for the phases executed, plus the four router rows below. Ne
    still be right for a patient whose priority is time at home rather than time alive? If the
    palliative-parallel trigger fired, is Arm B written with the same seriousness as Arm A —
    or is it a paragraph at the end?
+9. **Frame anchoring:** delete every diagnosis the case arrived with and reread the presenting
+   features cold. Does the differential still look complete — or was it shaped by the label?
+   Name at least one entity the given frame would have suppressed, or state that the
+   reconstruction (§2.0a Rule 3) found none and why.
 
 ### Delivery gate — APPROVED only if ALL ✓
 - [ ] Every recommendation → GRADE citation
@@ -1687,7 +1969,7 @@ version and a changelog line. Preserve prior versions (never silently overwrite)
 
 **Focused modes (M0, M2–M11) — short block, only what ran:**
 ```
-CLINICAL-ASSISTANT v6.7 · [M#·NAME]
+CLINICAL-ASSISTANT v6.8 · [M#·NAME]
 Question: [what was asked] | Sources: [n] ([n_en] EN / [n_es] ES) | Window: [years, as of date]
 Novelty: [N0 n · N1 n · N2 n · N3 n]  |  Guideline anchor: [societies cited]
 Not covered (available on request): [phases skipped — e.g. board, plan, QA]
@@ -1698,7 +1980,7 @@ Files: [evidence-brief / evidence-synthesis / frontier-scan / .bib / pdf]
 
 **Full case (M1):**
 ```
-CLINICAL-ASSISTANT v6.7 · M1·CASE · DELIVERY
+CLINICAL-ASSISTANT v6.8 · M1·CASE · DELIVERY
 [✓] P1 Case (+ hinge variables) · P2–3 Evidence ([N] sources, tracks A/B/C, GRADE)
 [·] P2c Deep research: [NOT TRIGGERED — why] / [RAN — n cycles, stop rule, [N] candidates]
 [✓] P4 Deliberation (13-archetype board + hinge analysis) · P5 Plan ([UNCONDITIONAL/CONDITIONAL])
