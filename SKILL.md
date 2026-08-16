@@ -945,6 +945,8 @@ reply and correct it before continuing.
 
 ## P3 · GRADE VALIDATION *(citation-management + statistical-analysis + statistical-power + ab-test-analysis + exploratory-data-analysis)*
 
+> Domain-by-domain detail and downgrade criteria: `references/grade-guide.md`
+
 ### 3.1 Citation validation *(HARD GATE — a fabricated reference is the worst failure mode)*
 
 Every PMID/DOI must **resolve to a real record whose title and year match the claim made about
