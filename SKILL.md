@@ -14,14 +14,18 @@ description: >
   prescription, or substitute for a licensed professional.
 license: CC-BY-4.0
 metadata:
-  version: "6.6"
+  version: "6.7"
   self-contained: true
   integrates: 28 embedded capabilities + 13-archetype board + 11-mode intent router
   language: bilingual EN+ES
   bundled: "scripts/clinical_patterns.py · scripts/pharmacology_ref.py ·
     scripts/roc_analysis.py · scripts/validate_skill.py · scripts/score_eval.py (offline) ·
     scripts/verify_citations.py (needs network) · references/ · eval/"
-  changelog: "6.6 — retraction/EoC/erratum gate added to citation verification (resolution is
+  changelog: "6.7 — goals-of-care axis: functional trajectory in P1, palliative-parallel
+    trigger (G1-G8), proportionality gate in §3.5, mandatory Ethicist/Patient-Advocate
+    questions in P4, two-axis plan with parallel Arm A / Arm B in P5, red-team attack 8,
+    12 new QA gates. Counterweights this skill's structural bias toward intervention.
+    6.6 — retraction/EoC/erratum gate added to citation verification (resolution is
     not validity), citation-drift taxonomy, contradiction taxonomy for M3, citation roles.
     6.5 — validity layer: citation verification as a hard gate (L1), calibration
     protocol replacing adjectival confidence (L2), validated appraisal instruments AGREE II /
@@ -44,7 +48,7 @@ metadata:
     loop-back + 4 new P7 QA gates."
 ---
 
-# Clinical-Assistant v6.6 — Virtual Clinical Team
+# Clinical-Assistant v6.7 — Virtual Clinical Team
 
 > ⚠️ **SAFETY:** Research/decision-support DRAFTS only. Never a diagnosis, prescription, or
 > consultation substitute. Every output marked **DRAFT — REQUIRES QUALIFIED CLINICAL REVIEW**.
@@ -482,6 +486,59 @@ modifier).
 **Regional prior:** the same presentation carries different pre-test probabilities by
 geography. State the assumed population — it drives everything in §3.5.
 
+### Functional trajectory & goals of care *(a second axis, gathered from the first contact)*
+
+Diagnosis is one axis. **Where the patient is heading, and what they want, is the other** —
+and it determines whether disease-directed work is the right question at all. Capture it in
+P1, not at the end when the plan is already written.
+
+**Trajectory — the rate matters more than the level** (same principle as personal baselines):
+```
+Functional status: now | 3 months ago | 6 months ago  → direction and speed of change
+```
+Use a named scale where one applies (ECOG, Karnofsky, Clinical Frailty Scale, ADL/IADL
+dependence). A patient at ECOG 2 who was ECOG 0 twelve weeks ago is a different clinical
+situation from a patient stable at ECOG 2 for three years — **the same number, opposite
+meanings.** Record unintentional weight loss, falls, hospitalisations in the last 6 months,
+and whether the patient can still do what matters to them.
+
+**Goals of care — ask, do not infer:**
+- Has anyone discussed goals of care or prognosis with the patient or family? What was said?
+- Advance directive, living will, healthcare proxy, DNR/DNI status — existing or absent?
+- In the patient's own words: what matters most to them, and what would be an unacceptable outcome?
+- Who decides if the patient cannot?
+
+If unknown, these become **PENDING-HINGE** items and go to OPEN REQUESTS. Do not assume
+maximal intervention is the default preference — that assumption is a clinical decision made
+silently, and it is the most consequential one in the whole workflow.
+
+### Palliative-parallel trigger — evaluate in EVERY case, log the result
+
+The trigger determines whether P5 must carry a **parallel** goals-of-care branch. It is
+evaluated by criteria, never by impression. Log it either way:
+`Palliative-parallel: [FIRED — criteria: …] / [NOT FIRED — why: …]`
+
+| # | Trigger | |
+|---|---|---|
+| G1 | Metastatic, disseminated or incurable disease **at the time of diagnosis** | |
+| G2 | Rapid documented functional decline (e.g. ≥2 ECOG levels in ≤3 months) | |
+| G3 | **ECOG ≥3** / Karnofsky ≤50 / Clinical Frailty Scale ≥7 | ⚙️ *tunable* |
+| G4 | Failure of ≥2 lines of guideline-concordant disease-directed therapy | |
+| G5 | Organ failure without candidacy for transplant or replacement therapy | |
+| G6 | Advanced age with multimorbidity and frailty, where treatment burden may exceed benefit | |
+| G7 | **The surprise question:** "Would I be surprised if this patient died within 12 months?" — answer *no* | ⚙️ *tunable* |
+| G8 | The patient or family raises it, in any wording | |
+
+> ⚙️ **Tunable parameters (clinical judgement, set by the reviewing clinician — not defaults
+> to accept blindly):** the **G3 threshold** may be set to ECOG ≥2 in contexts where treatment
+> burden is high or resources are constrained; and **G7 may operate as a hard trigger or as a
+> flag only**, depending on how conservatively the team wants the parallel branch to open.
+> Both are recorded here so they are changed deliberately rather than drifting.
+
+**Not firing is a decision too.** Record why. And note what the trigger is *not*: firing G1–G8
+does not mean stopping disease-directed treatment, and it does not mean the patient is dying.
+It means the plan must present both paths with equal seriousness instead of assuming one.
+
 ### Red-flag screening (active throughout intake → act immediately if detected)
 
 | Red flag | Action |
@@ -527,6 +584,9 @@ Demographics: [age, sex — no identifiers] | Chief complaint: [patient's own wo
 Symptoms & timeline: [chronology; onset as relative durations]
 Pattern: [continuous / episodic — if episodic: inter-episode baseline, prodrome, frequency, provocation, resolution]
 Personal baselines & trends: [parameter: current | prior value (date) | direction & rate]
+Functional trajectory: [status now | 3 mo | 6 mo — scale used, direction and speed]
+Goals of care: [discussed? · advance directive? · patient's stated priorities · surrogate — or "not established → PENDING-HINGE"]
+Palliative-parallel: [FIRED — criteria G# / NOT FIRED — why]
 Co-occurring symptoms: [even seemingly unrelated]
 Prior therapeutic context: [tried + response]
 Preliminary hypotheses: [conditions to investigate — NOT a diagnosis]
@@ -1068,6 +1128,25 @@ threshold, **the test does not belong in the workup** — it costs time and mone
 nothing. Say so and find a better test. This is the single most common failure in a
 generated workup and the reason this section exists.
 
+**Second axis — the proportionality gate.** The rule above asks whether the test moves the
+*probability*. This one asks whether the probability moves the *management*:
+
+> **If no result would change what we would actually do for this patient, given their
+> trajectory and stated goals, the test does not belong in the workup either.**
+
+Both must be yes. A test can be statistically excellent and still be the wrong thing to do:
+staging a patient who would not tolerate or want any of the treatments it would select for is
+not information-gathering, it is burden. Apply the gate explicitly whenever the
+palliative-parallel trigger has fired.
+
+**⚠️ This gate exists to counterweight a bias in this skill's own machinery.** Treatable-first
+ordering, discriminating tests and the deep-research loop all push toward *finding and
+treating* — that is what they are for. Nothing else here pushes the other way. In a patient
+whose trajectory is days to weeks, an invasive discriminating test is harm **caused**, not
+harm avoided, and the treatable-zebra rule will happily rank it first. Over-treatment near the
+end of life is a harm, and it is the harm this system is structurally most likely to cause.
+When the two rules conflict, proportionality wins, and the reasoning is stated in the plan.
+
 **Interpretation anchors:**
 - `LR+ > 10` or `LR− < 0.1` → meaningfully shifts probability. `LR ≈ 1` → useless test here.
 - **SnNOut:** a highly **Sn**sitive test, when **N**egative, rules **Out** → use for screening/exclusion.
@@ -1183,6 +1262,20 @@ re-enter P2c with that residue as the new phenotype vector. If the second pass a
 specialist/center to escalate to" output. A fabricated convergence is worse than an admitted
 one.
 
+**RULE 4 — IF THE PALLIATIVE-PARALLEL TRIGGER FIRED, TWO ARCHETYPES GET A MANDATORY QUESTION.**
+The Ethicist and The Patient Advocate are seated automatically and must each answer, in
+writing, before the board synthesises:
+- **The Ethicist:** *"Given this trajectory, does disease-directed treatment still serve this
+  patient — and what is the burden of the workup we are proposing?"*
+- **The Patient Advocate:** *"What has the patient said they want, and if we do not know, what
+  are we assuming on their behalf?"*
+
+Their declared blind spots apply as always (the Ethicist can paralyse action; the Advocate can
+choose comfort over progress) — the board weighs them, it does not defer to them. **The
+question being asked is not "should we give up?" but "which of these two paths, or which
+combination, is right for this patient?"** A board that treats the palliative branch as the
+losing option has not deliberated; it has assumed.
+
 **Board presets** (if trigger does NOT fire — select 5–6 with genuine tension):
 
 | Presentation | Configuration |
@@ -1218,6 +1311,7 @@ Blind spot: [what NO member addressed — the question behind the question]
 Hinge variables: [decision-flipping data points; mark AVAILABLE / PENDING]
 P2c candidates verdict (if P2c ran): [accepted / rejected + reason, per candidate]
 Deadlock status: [NONE / DECLARED → re-enter P2c / DECLARED TWICE → deliver honest undiagnosed output]
+Goals-of-care verdict (if trigger fired): [Ethicist + Patient Advocate positions; board's weighing of both paths]
 Recommended path: [if all hinges AVAILABLE → single path; if any PENDING → conditional tree]
 Confidence: [High / Medium / Low]
 ```
@@ -1272,18 +1366,71 @@ DECISION POINT: [hinge variable, e.g., vaccine/polysaccharide response]
 ```
 The interim action must be the safest defensible step, not a guess at the final arm.
 
+### The two axes of the plan *(when the palliative-parallel trigger has fired)*
+
+A decision tree that branches only on diagnostic uncertainty answers half the question. The
+plan branches on **two independent axes**, and both are written out:
+
+| Axis | Question | Resolved by |
+|---|---|---|
+| **Diagnostic** | What is it? | Hinge variables → discriminating tests |
+| **Goals of care** | Given the trajectory, what are we trying to achieve? | Conversation with patient/family — not a test |
+
+Write **both arms in full, at the same level of detail, in the same document.** Not
+disease-directed with palliative as a footnote; not "if treatment fails, consider palliative
+care". Parallel arms:
+
+```
+ARM A · DISEASE-DIRECTED
+  Intent: [cure / disease control / life prolongation] | Realistic expected benefit: [magnitude, timeframe]
+  Regimen · monitoring · toxicity burden · what it requires of the patient (visits, admissions, time)
+  Stopping rules: [what would make us stop — define BEFORE starting]
+  Trial/beyond-guideline options if applicable (N1/N2 labelling per §2.0b)
+
+ARM B · COMFORT-DIRECTED / SYMPTOM-FOCUSED
+  Intent: [symptom control, function, time at home, specific goals the patient named]
+  Symptom plan: [pain · dyspnoea · nausea · delirium · secretions · anxiety — each with a named approach]
+  Setting of care: [home / hospice / hospital] and what each requires
+  Anticipatory prescribing and escalation limits, stated explicitly
+  Family/carer support · bereavement pathway
+
+CONCURRENT (usually the right answer, and the most commonly omitted)
+  Early palliative care alongside disease-directed treatment. These are not mutually
+  exclusive, and framing them as a choice between two is itself a clinical error.
+
+WHAT DECIDES BETWEEN THEM
+  Not a test result — a conversation. Name: who should have it, what information the
+  patient needs first, and which findings would shift the balance either way.
+```
+
+**Ceiling of care, when relevant, is stated positively:** what *will* be done, not only what
+will be withheld. "Full ward-based treatment including antibiotics and IV fluids; not for ICU
+admission or CPR" is a plan. "Not for escalation" is not.
+
+**Prognostic communication:** give ranges with their uncertainty (*"weeks to a few months, and
+that estimate could be wrong in either direction"*), never a single number. State that
+prognostication is unreliable at the individual level — because it is, and a false precision
+here shapes irreversible decisions.
+
+**The framing rule:** this branch is never presented as failure, withdrawal, or "nothing more
+to do". It is an active plan with its own goals, interventions and follow-up. Language matters
+here more than anywhere else in the workflow.
+
 ### Diagnostic workup sequence (include whenever P2c ran)
 
 The discriminating tests from P2c become an ordered plan — **treatable-first, not
 probability-first** — so the patient's next appointment has a concrete ask:
 ```
-| Order | Test | Candidate it resolves | Pre-test → post-test (+/−) | Crosses threshold? | Why this order | Availability/cost |
+| Order | Test | Candidate it resolves | Pre-test → post-test (+/−) | Crosses threshold? | Would it change management given trajectory? | Why this order | Availability/cost |
 ```
-Every row carries the §3.5 numbers. Two hard rules:
+Every row carries the §3.5 numbers. Three hard rules:
 - **A test whose neither branch crosses a decision threshold does not appear in this table.**
   If it changes nothing, it is not a workup step — say so explicitly rather than listing it.
+- **A test that would not change management given this patient's trajectory and goals does not
+  appear either** (§3.5 proportionality gate). State that it was considered and why it was left
+  out — silence looks like an oversight.
 - Order rationale must be stated (e.g., "ranked 1st despite lower probability: treatable and
-  time-sensitive; cost of missing it is high"), and must survive P7 red-team attack 7.
+  time-sensitive; cost of missing it is high"), and must survive P7 red-team attacks 7 and 8.
 
 Prefer the cheap, fast, available test over the exotic one when both discriminate (pitfall 3,
 §3.5). Note local availability — a test that cannot be obtained in the patient's health system
@@ -1410,6 +1557,17 @@ audit only the rows for the phases executed, plus the four router rows below. Ne
 | Trial search covered CT.gov + EU CTIS + ISRCTN (+ regional registries) | | | Fix |
 | Every computed number was actually calculated, not narrated | | | Blocking if violated |
 | Workup sequence ordered treatable-first with stated rationale | | | |
+| Palliative-parallel trigger evaluated and logged (fired or not, with reason) | | | Blocking if absent |
+| **If trigger fired: Arm A and Arm B both written, at equal depth, in the same document** | | | Blocking if violated |
+| If trigger fired: concurrent (early palliative alongside disease-directed) explicitly considered | | | Blocking if violated |
+| If trigger fired: Ethicist + Patient Advocate answered their mandatory questions (P4 RULE 4) | | | Blocking if violated |
+| Proportionality gate applied — no test listed that would not change management given trajectory | | | Blocking if violated |
+| Functional trajectory captured as a rate (now vs 3/6 months), not a single level | | | Fix |
+| Goals of care asked, not inferred; if unknown, logged as PENDING-HINGE in OPEN REQUESTS | | | Blocking if violated |
+| Maximal intervention never assumed as the default preference | | | Blocking if violated |
+| Ceiling of care, if stated, expressed positively (what WILL be done) | | | Fix |
+| Prognosis given as a range with its uncertainty, never a single number | | | Blocking if violated |
+| Comfort-directed arm framed as an active plan, never as failure or "nothing more to do" | | | Blocking if violated |
 | **Every PMID/DOI resolves and matches its claim** (§3.1 gate run) | | | Blocking if violated |
 | **Retraction status checked on every reference** (§3.1b) | | | Blocking if absent |
 | No RETRACTED source cited; claims resting on one removed with it | | | Blocking if violated |
@@ -1447,6 +1605,10 @@ audit only the rows for the phases executed, plus the four router rows below. Ne
    the word "new" from every source — does the recommendation still stand on its GRADE alone?
 7. **Missed-treatable:** is there a treatable candidate ranked below an untreatable one purely
    on probability? If yes, the workup order is wrong.
+8. **Over-treatment:** strip the assumption that more intervention is better. Would this plan
+   still be right for a patient whose priority is time at home rather than time alive? If the
+   palliative-parallel trigger fired, is Arm B written with the same seriousness as Arm A —
+   or is it a paragraph at the end?
 
 ### Delivery gate — APPROVED only if ALL ✓
 - [ ] Every recommendation → GRADE citation
@@ -1525,7 +1687,7 @@ version and a changelog line. Preserve prior versions (never silently overwrite)
 
 **Focused modes (M0, M2–M11) — short block, only what ran:**
 ```
-CLINICAL-ASSISTANT v6.6 · [M#·NAME]
+CLINICAL-ASSISTANT v6.7 · [M#·NAME]
 Question: [what was asked] | Sources: [n] ([n_en] EN / [n_es] ES) | Window: [years, as of date]
 Novelty: [N0 n · N1 n · N2 n · N3 n]  |  Guideline anchor: [societies cited]
 Not covered (available on request): [phases skipped — e.g. board, plan, QA]
@@ -1536,12 +1698,13 @@ Files: [evidence-brief / evidence-synthesis / frontier-scan / .bib / pdf]
 
 **Full case (M1):**
 ```
-CLINICAL-ASSISTANT v6.6 · M1·CASE · DELIVERY
+CLINICAL-ASSISTANT v6.7 · M1·CASE · DELIVERY
 [✓] P1 Case (+ hinge variables) · P2–3 Evidence ([N] sources, tracks A/B/C, GRADE)
 [·] P2c Deep research: [NOT TRIGGERED — why] / [RAN — n cycles, stop rule, [N] candidates]
 [✓] P4 Deliberation (13-archetype board + hinge analysis) · P5 Plan ([UNCONDITIONAL/CONDITIONAL])
 [✓] P6 Report · P7 QA approved
 Dx-status: [working hypothesis / conditional on workup / UNDIAGNOSED — escalation target named]
+Goals-of-care axis: [NOT TRIGGERED — why] / [TRIGGERED G# — Arm A + Arm B + concurrent option written]
 Tx-status: [single path / decision tree pending {hinge vars} → resolving tests]
 Novelty content: [N0: n · N1 beyond-guideline: n · N2 trials: n · N3 excluded from plan: n]
 Recency window: evidence current as of [date]; frontier scan window [x months]
@@ -1570,7 +1733,8 @@ literature confirmation (`LOOK UP, DON'T GUESS`).
 | `scripts/score_eval.py` | evaluation | Aggregates `eval/cases/*/score.json` into a report card with stop-the-line conditions and version-over-version comparison |
 | `references/appraisal-instruments.md` | P2 §2.3 · P3 §3.6 | AGREE II · QUADAS-2 · RoB 2 · ROBINS-I · AMSTAR-2 · reporting standards, with where each attaches |
 | `references/specialty-packs.md` | P1 · P2 · P2c | 13 packs: authoritative bodies, must-not-miss lists, named criteria, classic mimics |
-| `eval/README.md` · `eval/rubric.md` | evaluation | Case sourcing, run protocol, bias-injection test, scoring rubric |
+| `eval/README.md` · `eval/rubric.md` | evaluation | Case sourcing, run protocol, scoring rubric |
+| `eval/bias-injection/` · `scripts/score_bias.py` | evaluation | Five paired cases that test whether P2c RULE 0 (anti-anchoring) actually holds, plus the scorer |
 | `scripts/validate_skill.py` | maintenance | Structural linter — run after every edit to this skill. Checks the 1024-char description limit, fences, table shape, dangling §-refs, phase/mode integrity, version consistency, and 16 safety invariants |
 
 Run `--help` on any of them for the full argument list.

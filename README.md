@@ -3,7 +3,7 @@
 **An 8-phase clinical reasoning and medical evidence workflow for Claude, built to be verifiable rather than merely fluent.** It runs differential diagnosis, evidence appraisal, a 13-perspective clinical board, and treatment planning — and it refuses to state more confidence than the evidence underneath it supports.
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg?style=flat-square)](https://creativecommons.org/licenses/by/4.0/)
-![Version](https://img.shields.io/badge/version-6.6-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-6.7-blue?style=flat-square)
 ![Self-contained](https://img.shields.io/badge/dependencies-none-success?style=flat-square)
 ![Language](https://img.shields.io/badge/language-EN%20%7C%20ES-informational?style=flat-square)
 ![QA gates](https://img.shields.io/badge/QA%20gates-60%20(28%20blocking)-orange?style=flat-square)
@@ -28,6 +28,7 @@ This skill is built around one idea: *a clinician should be able to audit any st
 | Guidelines ranked by brand | Guidelines appraised with **AGREE II**; diagnostic studies with **QUADAS-2** |
 | Findings that don't fit get discarded | The **residue list** — unexplained findings are tracked as signal, not noise |
 | One guess when data is missing | A **decision tree** with the missing variable named as the hinge |
+| Everything points toward more intervention | A **goals-of-care axis** runs parallel: disease-directed and comfort-directed arms written at equal depth |
 | Newer sounds better | **N0–N3 novelty ladder**: preprints inform the differential, never the plan |
 
 ---
@@ -78,9 +79,9 @@ Ask in plain language — *"busca estudios donde el CKM se trata con agonistas G
 | **P2c · Deep research** | bounded phenotype-first loop | **Anti-anchoring**, rarest-feature-first, regression/trigger heuristics, dual-pathology check, hard 4-cycle budget with explicit stop rules |
 | **P3 · GRADE + appraisal** | citation gate, retraction gate, Bayesian test engine, AGREE II / QUADAS-2 / RoB 2 / ROBINS-I / AMSTAR-2 | The heart of the reliability layer — see below |
 | **P4 · Board** | 13 archetypes with declared blind spots | Structured disagreement; **deadlock is declared honestly**, not papered over |
-| **P5 · Plan** | conditional decision trees, workup sequencing | Ordered **treatable-first**, not probability-first |
+| **P5 · Plan** | conditional decision trees, workup sequencing, two-axis planning | Ordered **treatable-first**, not probability-first; when trajectory warrants it, disease-directed and comfort-directed arms are written in parallel — never one as the other's fallback |
 | **P6 · Report** | CARE/CONSORT-aware reporting | Traceable structure; novelty provenance stated |
-| **P7 · QA** | 60 gates, 28 blocking · 7-attack red team | Nothing ships that fails a blocking gate |
+| **P7 · QA** | 71 gates, 37 blocking · 8-attack red team | Nothing ships that fails a blocking gate |
 | **P8 · Update** | targeted re-run with diff | New data collapses the right branch; **frontier re-check at 6 months** — a plan goes stale without the patient changing |
 
 ### The 13-perspective board
@@ -163,13 +164,14 @@ A standing **open requests** block carries what is needed *from the human*: spec
 
 ## Included tooling
 
-Six offline scripts, pure standard library, no API keys:
+Seven offline scripts, pure standard library, no API keys:
 
 | Script | Purpose |
 |---|---|
 | `verify_citations.py` | Citation + **retraction** gate. `--selftest` verifies the logic offline |
-| `validate_skill.py` | Structural linter — 31 safety invariants, install limits, cross-references, version consistency |
+| `validate_skill.py` | Structural linter — 39 safety invariants, install limits, cross-references, version consistency |
 | `score_eval.py` | Aggregates evaluation cases into a report card with stop-the-line conditions |
+| `score_bias.py` | Scores the bias-injection test — does the anti-anchoring rule actually hold? |
 | `clinical_patterns.py` | Syndrome triads, occupational exposures with latency, red-flag differentials |
 | `pharmacology_ref.py` | CYP/UGT roles, critical interaction pairs, narrow-therapeutic-index list |
 | `roc_analysis.py` | AUC with bootstrap CI, Youden-optimal cutoff |
