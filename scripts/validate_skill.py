@@ -272,6 +272,14 @@ def check_safety_invariants(text: str) -> None:
         "context transfer": "Context transfer mismatch",
         "contradiction taxonomy": "Contradiction taxonomy",
         "citation roles": "Citation roles",
+        "trajectory axis": "Functional trajectory & goals of care",
+        "palliative trigger": "Palliative-parallel trigger",
+        "proportionality gate": "proportionality gate",
+        "two-axis plan": "ARM B · COMFORT-DIRECTED",
+        "concurrent option": "CONCURRENT",
+        "no-assumed-maximal": "maximal intervention is the default",
+        "positive ceiling": "stated positively",
+        "prognosis range": "never a single number",
     }
     for label, needle in must_have.items():
         if needle not in text:
