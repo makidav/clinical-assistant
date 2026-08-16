@@ -295,6 +295,8 @@ def check_safety_invariants(text: str) -> None:
         "frequency ranges": "depending on cohort",
         "resolved differential documented": "not only the part still open",
         "coverage vs calibration": "cannot be\n> mis-calibrated",
+        "retroactive plausibility check": "must clear a plausibility check",
+        "treatment-response benchmarking": "reported response to treatment",
     }
     for label, needle in must_have.items():
         if needle not in text:
