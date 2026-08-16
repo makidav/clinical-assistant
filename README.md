@@ -203,7 +203,7 @@ git clone https://github.com/makidav/clinical-assistant.git
 cp -r clinical-assistant ~/.claude/skills/
 ```
 
-Or in Claude Desktop / claude.ai: **Settings → Capabilities → Skills → Upload**, then select the `clinical-assistant` folder (or the release `.zip`).
+Or in Claude Desktop / claude.ai: **Settings → Capabilities → Skills → Upload**, then select the `clinical-assistant` folder.
 
 Verify the install:
 
