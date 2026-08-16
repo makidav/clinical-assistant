@@ -199,7 +199,7 @@ The best evaluation cases are not published benchmarks — they are **the review
 Copy the folder into your skills directory:
 
 ```bash
-git clone https://github.com/USER/clinical-assistant.git
+git clone https://github.com/makidav/clinical-assistant.git
 cp -r clinical-assistant ~/.claude/skills/
 ```
 
