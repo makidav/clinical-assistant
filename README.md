@@ -171,7 +171,7 @@ Seven offline scripts, pure standard library, no API keys:
 | Script | Purpose |
 |---|---|
 | `verify_citations.py` | Citation + **retraction** gate. `--selftest` verifies the logic offline |
-| `validate_skill.py` | Structural linter — 53 safety invariants, install limits, cross-references, version consistency |
+| `validate_skill.py` | Structural linter — 55 safety invariants, install limits, cross-references, version consistency |
 | `score_eval.py` | Aggregates evaluation cases into a report card with stop-the-line conditions |
 | `score_bias.py` | Scores the bias-injection test — does the anti-anchoring rule actually hold? |
 | `clinical_patterns.py` | Syndrome triads, occupational exposures with latency, red-flag differentials |
@@ -262,3 +262,4 @@ Appraisal instruments (AGREE II, QUADAS-2, RoB 2, ROBINS-I, AMSTAR-2) and report
 ---
 
 <sub>Clinical decision support · differential diagnosis · rare disease · evidence appraisal · GRADE · medical AI · Claude Agent Skill · bilingual EN/ES</sub>
+README: 53 -> 55
