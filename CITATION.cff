@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+title: "Clinical-Assistant: a Virtual Clinical Team as a single Agent Skill"
+message: "If you use this skill in research or clinical work, please cite it."
+type: software
+authors:
+  - family-names: "Hernández Irisarri"
+    given-names: "David"
+    alias: makidav
+repository-code: "https://github.com/makidav/clinical-assistant"
+url: "https://makidav.github.io/clinical-assistant/"
+abstract: >-
+  An 8-phase clinical reasoning and medical evidence workflow for Claude,
+  built to be verifiable rather than fluent. Runs differential diagnosis,
+  GRADE evidence appraisal with validated instruments (AGREE II, QUADAS-2,
+  RoB 2), a 13-perspective clinical board, and treatment planning. Every
+  citation is resolved and checked for retraction; every diagnostic test is
+  evaluated by post-test probability. Produces decision-support drafts for
+  qualified clinicians — not diagnoses.
+keywords:
+  - clinical decision support
+  - differential diagnosis
+  - evidence-based medicine
+  - GRADE
+  - rare disease
+  - medical AI
+  - large language models
+  - Claude Agent Skill
+license: CC-BY-4.0
+version: "6.6"
+date-released: "2026-08-15"
