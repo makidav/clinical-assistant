@@ -168,7 +168,7 @@ Six offline scripts, pure standard library, no API keys:
 | Script | Purpose |
 |---|---|
 | `verify_citations.py` | Citation + **retraction** gate. `--selftest` verifies the logic offline |
-| `validate_skill.py` | Structural linter — 24 safety invariants, install limits, cross-references, version consistency |
+| `validate_skill.py` | Structural linter — 31 safety invariants, install limits, cross-references, version consistency |
 | `score_eval.py` | Aggregates evaluation cases into a report card with stop-the-line conditions |
 | `clinical_patterns.py` | Syndrome triads, occupational exposures with latency, red-flag differentials |
 | `pharmacology_ref.py` | CYP/UGT roles, critical interaction pairs, narrow-therapeutic-index list |
