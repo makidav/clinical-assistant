@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Evaluation runs — real cases may contain clinical data.
+# Only the template case is tracked; add your own cases locally.
+eval/cases/*/
+!eval/cases/_example/
+eval/baseline-*.json
+eval/*.json
+
+# OS
+.DS_Store
+Thumbs.db
