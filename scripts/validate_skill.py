@@ -206,8 +206,9 @@ def check_phase_sections(text: str) -> None:
 
 def check_section_refs(text: str) -> None:
     """Every §X.Y cross-reference must have a matching '### X.Y' heading."""
-    refs = set(re.findall(r"§(\d+(?:\.\d+)?[a-z]?)", text))
-    heads = set(re.findall(r"^###\s+(\d+\.\d+[a-z]?)", text, re.M))
+    # Section numbers may carry a phase letter: 3.5, 2.0b, and 2c.5 are all valid.
+    refs = set(re.findall(r"§(\d+[a-z]?(?:\.\d+[a-z]?)?)", text))
+    heads = set(re.findall(r"^###\s+(\d+[a-z]?\.\d+[a-z]?)", text, re.M))
     missing = sorted(r for r in refs if r not in heads)
     if missing:
         err(f"Dangling section references (no matching heading): {missing}")
@@ -280,6 +281,20 @@ def check_safety_invariants(text: str) -> None:
         "no-assumed-maximal": "maximal intervention is the default",
         "positive ceiling": "stated positively",
         "prognosis range": "never a single number",
+        "exclusion audit": "EXCLUSION AUDIT + NOMINATED DIFFERENTIAL",
+        "ruled-out-is-a-claim": "is a claim, not a fact",
+        "FXIII example": "factor XIII deficiency",
+        "named entities": "a category is not a differential entry",
+        "imaging memo mandatory": "The memo is mandatory, not optional",
+        "natural course": "Expected natural course",
+        "setbacks vs failure": "Expected setbacks",
+        "frame audit": "Reconstruct before you inherit",
+        "frame reconciliation log": "Given frame:",
+        "marker multi-frame": "different things in different frames",
+        "interim specificity": "same standard of specificity",
+        "frequency ranges": "depending on cohort",
+        "resolved differential documented": "not only the part still open",
+        "coverage vs calibration": "cannot be\n> mis-calibrated",
     }
     for label, needle in must_have.items():
         if needle not in text:
