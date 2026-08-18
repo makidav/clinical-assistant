@@ -14,6 +14,8 @@ Usage:
 Addresses Q927 failure pattern: valproate inhibits UGT1A4 → lamotrigine levels double.
 No external dependencies.
 """
+from __future__ import annotations
+
 
 import argparse
 import json

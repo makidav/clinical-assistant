@@ -7,6 +7,8 @@ Usage:
     python clinical_patterns.py --type red_flag --symptom "splenomegaly"
     python clinical_patterns.py --type occupational --exposure "asbestos"
 """
+from __future__ import annotations
+
 
 import argparse
 import json
