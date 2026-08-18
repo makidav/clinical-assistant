@@ -2177,7 +2177,7 @@ Fallbacks: [list missing connectors, if any]
 
 ## Bundled resources (offline, no connector or installation required)
 
-All three are pure-stdlib Python, run without network access or API keys, and are **hypothesis
+All are pure-stdlib Python (3.9+), run without network access or API keys, and are **hypothesis
 prompts and reference tables — not sources of truth.** Anything they return still requires
 literature confirmation (`LOOK UP, DON'T GUESS`).
 

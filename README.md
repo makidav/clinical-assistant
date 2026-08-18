@@ -219,7 +219,7 @@ python3 scripts/validate_skill.py SKILL.md      # expect: STATUS: CLEAN
 python3 scripts/verify_citations.py --selftest  # expect: 10/10 passed
 ```
 
-Nothing else to install — no packages, no API keys, no MCP servers. Optional connectors are used when present and have documented fallbacks when absent.
+Nothing else to install — no packages, no API keys, no MCP servers. Every bundled script is pure-stdlib and runs on **Python 3.9 or newer** (including the Python shipped with macOS Command Line Tools). Optional connectors are used when present and have documented fallbacks when absent.
 
 ### Usage
 
