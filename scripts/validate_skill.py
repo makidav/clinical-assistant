@@ -297,6 +297,9 @@ def check_safety_invariants(text: str) -> None:
         "coverage vs calibration": "cannot be\n> mis-calibrated",
         "retroactive plausibility check": "must clear a plausibility check",
         "treatment-response benchmarking": "reported response to treatment",
+        "jurisdiction intake": "Jurisdiction & health-system context",
+        "unobtainable hinge branch": "the hinge can never be resolved",
+        "unobtainable not for convenience": "inconvenient, slow, or expensive to obtain",
     }
     for label, needle in must_have.items():
         if needle not in text:
