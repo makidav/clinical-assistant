@@ -3,10 +3,10 @@
 **An 8-phase clinical reasoning and medical evidence workflow for Claude, built to be verifiable rather than merely fluent.** It runs differential diagnosis, evidence appraisal, a 13-perspective clinical board, and treatment planning — and it refuses to state more confidence than the evidence underneath it supports.
 
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-lightgrey.svg?style=flat-square)](https://creativecommons.org/licenses/by/4.0/)
-![Version](https://img.shields.io/badge/version-6.9-blue?style=flat-square)
+![Version](https://img.shields.io/badge/version-7.0-blue?style=flat-square)
 ![Self-contained](https://img.shields.io/badge/dependencies-none-success?style=flat-square)
 ![Language](https://img.shields.io/badge/language-EN%20%7C%20ES-informational?style=flat-square)
-![QA gates](https://img.shields.io/badge/QA%20gates-87%20(49%20blocking)-orange?style=flat-square)
+![QA gates](https://img.shields.io/badge/QA%20gates-90%20(53%20blocking)-orange?style=flat-square)
 
 > ### ⚠️ Read this first
 > This skill produces **research and decision-support drafts for qualified clinicians**. It is **not** a medical device, does not diagnose, does not prescribe, and does not replace a licensed professional. Every output carries a DRAFT header. The engineering targets in this repository are software quality metrics — **they are not clinical performance claims and must never be quoted as such.**
@@ -75,15 +75,15 @@ Ask in plain language — *"busca estudios donde el CKM se trata con agonistas G
 | Phase | Embedded capabilities | What it adds to reliability |
 |---|---|---|
 | **P0 · Router** | intent classification | Focused answers stay focused; safety **upshifts** are mandatory — a literature question containing a patient in danger abandons the mode |
-| **P1 · Intake** | structured anamnesis, red-flag screen, validated risk scores, specialty routing | Captures **occupational exposure with up-to-50-year latency**, **personal baselines and rate of change**, and a distinct intake shape for **episodic** presentations |
+| **P1 · Intake** | structured anamnesis, red-flag screen, validated risk scores, specialty routing | Captures **occupational exposure with up-to-50-year latency**, **personal baselines and rate of change**, **jurisdiction and health-system context**, and a distinct intake shape for **episodic** presentations |
 | **P2b · Imaging** | native vision analysis | Conditional but **mandatory when an image exists** — a decisive finding read informally is one nobody audited |
 | **P2 · Evidence** | 3 parallel tracks — diagnostic criteria, treatment thresholds, **frontier scan** | Guideline hierarchy, ≥3 sources, **conflicts surfaced not resolved silently**; bidirectional drug-interaction matrix |
 | **P2c · Deep research** | bounded phenotype-first loop | **Anti-anchoring**, rarest-feature-first, regression/trigger heuristics, dual-pathology check, hard 4-cycle budget with explicit stop rules |
 | **P3 · GRADE + appraisal** | citation gate, retraction gate, Bayesian test engine, AGREE II / QUADAS-2 / RoB 2 / ROBINS-I / AMSTAR-2 | The heart of the reliability layer — see below |
 | **P4 · Board** | 13 archetypes with declared blind spots | Structured disagreement; **deadlock is declared honestly**, not papered over |
-| **P5 · Plan** | conditional decision trees, workup sequencing, two-axis planning | Ordered **treatable-first**, not probability-first; when trajectory warrants it, disease-directed and comfort-directed arms are written in parallel — never one as the other's fallback |
+| **P5 · Plan** | conditional decision trees, workup sequencing, two-axis planning | Ordered **treatable-first**, not probability-first; when trajectory warrants it, disease-directed and comfort-directed arms are written in parallel — never one as the other's fallback; every named drug, test and referral checked against the patient's own health system |
 | **P6 · Report** | CARE/CONSORT-aware reporting | Traceable structure; novelty provenance stated |
-| **P7 · QA** | 87 gates, 49 blocking · 9-attack red team | Nothing ships that fails a blocking gate |
+| **P7 · QA** | 90 gates, 53 blocking · 9-attack red team | Nothing ships that fails a blocking gate |
 | **P8 · Update** | targeted re-run with diff | New data collapses the right branch; **frontier re-check at 6 months** — a plan goes stale without the patient changing |
 
 ### The 13-perspective board
@@ -159,6 +159,8 @@ Nothing is upgraded a tier within a session. *Newer ≠ better; rarer ≠ righte
 
 When a decision-critical variable is unavailable, the plan is written as a **conditional decision tree** with the missing variable named as the hinge and the resolving test attached — instead of a single confident path built on an assumption.
 
+And when a hinge can *never* be resolved — the test does not exist in that health system, funding was refused, the tissue is gone — the plan does not wait indefinitely. It declares the branch, states which mistake is more survivable, caps its own certainty for the missing variable, and names what would reopen the question. Pending means wait with a plan; unobtainable means decide with a stated cost.
+
 A standing **open requests** block carries what is needed *from the human*: specific documents, specific decisions, specific access. "The 2023 TSH, to establish the baseline" — not "more labs".
 </details>
 
@@ -171,7 +173,7 @@ Seven offline scripts, pure standard library, no API keys:
 | Script | Purpose |
 |---|---|
 | `verify_citations.py` | Citation + **retraction** gate. `--selftest` verifies the logic offline |
-| `validate_skill.py` | Structural linter — 55 safety invariants, install limits, cross-references, version consistency |
+| `validate_skill.py` | Structural linter — 58 safety invariants, install limits, cross-references, version consistency |
 | `score_eval.py` | Aggregates evaluation cases into a report card with stop-the-line conditions |
 | `score_bias.py` | Scores the bias-injection test — does the anti-anchoring rule actually hold? |
 | `clinical_patterns.py` | Syndrome triads, occupational exposures with latency, red-flag differentials |

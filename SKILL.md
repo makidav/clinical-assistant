@@ -14,14 +14,32 @@ description: >
   prescription, or substitute for a licensed professional.
 license: CC-BY-4.0
 metadata:
-  version: "6.9"
+  version: "7.0"
   self-contained: true
   integrates: 28 embedded capabilities + 13-archetype board + 11-mode intent router
   language: bilingual EN+ES
   bundled: "scripts/clinical_patterns.py · scripts/pharmacology_ref.py ·
     scripts/roc_analysis.py · scripts/validate_skill.py · scripts/score_eval.py (offline) ·
     scripts/verify_citations.py (needs network) · references/ · eval/"
-  changelog: "6.9 — case #12 retrospective audit (real outcome available post-hoc) surfaced
+  changelog: "7.0 — external review round (13th audit cycle): eight proposals assessed against
+    the file itself; four rested on premises the file already refutes (tool fallback table,
+    citation-drift taxonomy, board presets, red-flag override) and were rejected with evidence,
+    two were rejected on merit (fixed-size context snapshot would discard the residue list and
+    resolved differential to save tokens; phenotype-keyed board selection institutionalises the
+    anchoring the anti-anchoring rules exist to prevent). Three were real gaps and are adopted
+    here: (1) JURISDICTION — P5, P2c and P7 attack 4 already tested plans against local access
+    and cost, but no phase ever collected the country, so three checks ran on an unstated US/EU
+    assumption; now an intake field, a structured-case line, a P5 availability check and a QA
+    gate. (2) UNOBTAINABLE HINGES (§5.1b) — the conditional tree assumed pending means arriving;
+    a hinge that can never be resolved left the plan waiting indefinitely. New third state
+    (Tx-blocking UNRESOLVABLE) forcing a declared branch with surrogate search, capped certainty
+    and a default justified on asymmetry of harm — explicitly NOT permission to guess the
+    missing value, and not available for merely slow or costly tests. (3) Emergency protocols
+    relocated from the file's end to ahead of the operating rules, with an explicit stop rule
+    (no differential appended to a triage instruction) — placement only, no content change.
+    3 new QA gates (90 total), 3 new linter invariants (58). Version bumped to 7.0 rather than
+    6.10 to mark the first release driven by external review rather than case audit.
+    6.9 — case #12 retrospective audit (real outcome available post-hoc) surfaced
     two blind spots not caught by v6.8: (1) a unifying diagnosis was accepted as explaining a
     decades-old finding without checking whether that diagnosis is epidemiologically plausible
     at the age/context the old finding occurred in — added §2.0a Rule 5 (base-rate plausibility
@@ -62,7 +80,7 @@ metadata:
     loop-back + 4 new P7 QA gates."
 ---
 
-# Clinical-Assistant v6.9 — Virtual Clinical Team
+# Clinical-Assistant v7.0 — Virtual Clinical Team
 
 > ⚠️ **SAFETY:** Research/decision-support DRAFTS only. Never a diagnosis, prescription, or
 > consultation substitute. Every output marked **DRAFT — REQUIRES QUALIFIED CLINICAL REVIEW**.
@@ -117,6 +135,28 @@ copy-editing · pdf · docx | P7: intended-vs-implemented · strategy-red-team |
 | Phenotype/rare (P2c) | Orphanet · OMIM · HPO/Monarch · GARD API | `web_search site:orpha.net`, `site:omim.org`, `site:rarediseases.info.nih.gov` |
 | Frontier (Track C) | medRxiv/bioRxiv · CT.gov API · ICD-11 API | `web_search` on medrxiv.org, clinicaltrials.gov, icd.who.int, fda.gov, ema.europa.eu |
 | PDF/DOCX | Rendered file | Rich Markdown + paste-to-Word note |
+
+---
+
+## Emergency protocols (hard stops — override everything)
+
+**These run before the router and before any phase.** They are placed here, ahead of every
+other rule, because a workflow that reasons its way to an emergency has already lost the time
+that mattered. No mode, no user framing ("just a literature question", "hypothetically"), and
+no partial data requirement defers them.
+
+**Medical emergency** (chest pain / dyspnea / LOC / stroke / seizure / massive bleeding):
+> EN: "This requires IMMEDIATE medical attention. Call 911 / 112 / local emergency or go to the ER NOW."
+> ES: "Esto requiere atención médica INMEDIATA. Llama al 911 / 112 o acude a urgencias AHORA."
+
+**Mental-health crisis** (suicidal ideation / active self-harm):
+Acknowledge warmly · do not continue workflow · ask if they are safe · provide local crisis line.
+
+**PHI detected:** request de-identification; do not store or repeat identifiers.
+
+On firing: deliver the escalation and **stop**. Do not append a differential, a workup, or a
+"meanwhile you could" list — a triage instruction diluted by analysis reads as optional. Resume
+the workflow only if the user confirms the person is safe or already under care.
 
 ---
 
@@ -416,6 +456,18 @@ If the user opens with a specific study/claim → treat it as interview data, ev
   > A patient can present at 62 with an exposure that ended at 25. If you only ask "what do you do?", you get a negative history on a positive patient.
   > Reference: `python scripts/clinical_patterns.py --type occupational --exposure [agent]` → diseases, latency, at-risk occupations, key findings, workup.
 - **Context:** specific condition under investigation · why now · current medical team opinion.
+- **Jurisdiction & health-system context** *(ask once, early — it changes what the plan may recommend)*: country/region, and the funding route if the user knows it (public system, insurance, out-of-pocket). One question, not a form.
+  > This is a clinical variable, not an administrative one. Three checks downstream already
+  > depend on it: P2c ranks trials by the patient's geography, P5 must not order a test the
+  > patient's health system cannot deliver, and P7 red-team attack 4 audits the plan against
+  > real access and cost. Without the field, those three run on an assumption — usually an
+  > unstated US/EU one.
+  > A first-line drug that is approved but unfunded in the patient's country is not a first-line
+  > drug **for this patient**; name the locally available alternative alongside it rather than
+  > silently recommending the unreachable one.
+  > If not supplied, record `Jurisdiction: not stated → assuming international guidelines` in
+  > the structured case and carry it into OPEN REQUESTS. Never infer it from the user's language
+  > — Spanish is spoken across dozens of health systems with different formularies.
 
 ### Validated risk scores (compute when the scenario calls for one — never estimate)
 
@@ -595,6 +647,7 @@ State explicitly which fields are PENDING-HINGE and carry them forward as named 
 ```
 # Structured Clinical Case — [date] | DRAFT
 Demographics: [age, sex — no identifiers] | Chief complaint: [patient's own words]
+Jurisdiction: [country/region · funding route if known — or "not stated → assuming international guidelines"]
 Symptoms & timeline: [chronology; onset as relative durations]
 Pattern: [continuous / episodic — if episodic: inter-episode baseline, prodrome, frequency, provocation, resolution]
 Personal baselines & trends: [parameter: current | prior value (date) | direction & rate]
@@ -608,7 +661,8 @@ Decision-critical data:
   AVAILABLE: [fields with values]
   PENDING-HINGE: [missing fields that will change the recommendation → named variables]
   PENDING-NONHINGE: [missing but non-decisive]
-Tx-blocking status: [BLOCKED pending {list} / CLEAR to plan conditionally]
+  UNOBTAINABLE: [hinge variables that cannot be resolved at all — with the reason: unavailable in this health system / patient declines / no longer possible. Distinct from PENDING; see §5.1b]
+Tx-blocking status: [BLOCKED pending {list} / CLEAR to plan conditionally / UNRESOLVABLE — {list} unobtainable → §5.1b branch required]
 PICO: | # | Population | Intervention | Comparison | Outcome |
 Red flags: [identified — or "none at this stage"]
 Exposure history: [occupational (incl. PAST jobs) · environmental · travel · animals — or "screened, none"]
@@ -1568,6 +1622,12 @@ Read the P1 Tx-blocking status and the board's hinge variables:
   Do NOT collapse it into a single conservative recommendation. A single unconditional Tx for
   a blocked arm is a **QA blocking gap** (caught in P7).
 - **All hinges AVAILABLE** → write the single recommended path normally.
+- **Any hinge UNOBTAINABLE** (Tx-blocking status `UNRESOLVABLE`) → §5.1b branch, not a pending
+  tree. A tree that waits on a test that will never arrive is an abandoned plan.
+- **Jurisdiction check** → before finalising, confirm every named drug, test and referral is
+  actually reachable in the patient's stated health system. Where it is not, name the locally
+  available alternative next to it. If jurisdiction was never stated, say once which guideline
+  set you defaulted to — an unmarked assumption is the failure mode here, not the default itself.
 
 ### Conditional recommendation format (decision tree, when a hinge is pending)
 For each intervention gated by a pending hinge variable, write BOTH arms explicitly:
@@ -1622,6 +1682,54 @@ patient actually lives while the hinge test is being arranged: days to weeks of 
   the single most important question about any bridge therapy.
 - If **no interim intervention is warranted**, say so explicitly and say why. Deliberate
   watchful waiting is a decision; silence is an omission.
+
+### 5.1b When the hinge can never be resolved — declare the branch, don't stall
+
+The conditional tree above assumes the hinge test is *pending*: it will arrive, and the plan
+collapses onto the right arm when it does. Some hinges never arrive. The test does not exist in
+the patient's health system, the funding was refused, the patient declines it, the tissue is
+gone, the window has closed. **A tree that waits forever is not a safe plan — it is an
+abandoned one**, and the patient is treated by default rather than by decision.
+
+**Trigger:** the user states, or the case establishes, that a hinge variable cannot be obtained
+at all. Not "not yet" — *not going to happen*. Mark it `UNOBTAINABLE` in P1 with the reason,
+and set `Tx-blocking status: UNRESOLVABLE`.
+
+**This is not permission to guess the missing value.** The variable stays unknown and is
+labelled as such in every downstream statement. What changes is that the plan stops being
+conditional on a resolution that will not come, and becomes an explicit decision under
+irreducible uncertainty:
+
+```
+UNRESOLVABLE HINGE: [variable] — [why it cannot be obtained]
+├─ IF [state A were true] → [action] | risk if we act this way and A is false: [harm]
+├─ IF [state B were true] → [action] | risk if we act this way and B is false: [harm]
+├─ DEFENSIBLE DEFAULT: [the action chosen without the variable]
+│    Chosen because: [which harm it minimises across BOTH branches — not which branch is
+│    likelier, but which mistake is more survivable]
+│    Prior used, if any: [base rate + source — or "none; chosen on asymmetry of harm alone"]
+│    Certainty: [band] — capped, because the discriminating variable is missing
+└─ WHAT WOULD REOPEN THIS: [surrogate marker, later access, therapeutic trial response,
+     or a clinical change that makes the question answerable another way]
+```
+
+**Three requirements, all auditable in P7:**
+1. **Look for a surrogate before accepting the gap.** An imperfect proxy that is obtainable
+   often beats a perfect test that is not — and where one exists, its inferiority must be
+   stated, not glossed. Only after the search fails does the default become the answer.
+2. **Cap the certainty and say why.** A plan built without its discriminating variable cannot
+   carry the confidence band it would have carried with it. State the cap explicitly and attach
+   the falsifier as always (`CALIBRATE, DON'T REASSURE` applies here in full).
+3. **Choose on asymmetry of harm, not on likelihood alone.** The default is the arm whose
+   failure mode is most recoverable — treating a condition the patient may not have is not
+   symmetric with missing one they do, and the direction of that asymmetry is the argument.
+
+**What this rule does not license:** downgrading a hinge to UNOBTAINABLE because it is
+inconvenient, slow, or expensive to obtain. Cost and delay are arguments for a named interim
+arm (above), not for abandoning the test. If the user says only "no tengo ese dato" without
+saying it is unobtainable, it is still PENDING — ask which one it is before branching. The
+distinction is the whole rule: **pending means wait with a plan; unobtainable means decide with
+a stated cost.**
 
 > **The trap this closes.** In a systemically inflamed patient awaiting confirmatory biopsy,
 > a corticosteroid bridge may be the right interim step — it can control fever and acute-phase
@@ -1919,6 +2027,9 @@ audit only the rows for the phases executed, plus the four router rows below. Ne
 | Single-language integrity (no 3rd language) | | | |
 | **If a current diagnosis is credited with explaining an earlier finding: base-rate plausibility checked for that finding's age/context (§2.0a Rule 5), reconciliation logged** | | | Blocking if violated |
 | **If P8 ran with a reported treatment response: magnitude/direction checked against the cited evidence base (§8.3); deviations flagged as residue, not silently credited to the intervention; treatment-indicated-to-started gap surfaced if present** | | | Blocking if violated |
+| **Jurisdiction recorded in P1 (or explicitly marked not stated), and every named drug/test/referral in P5 checked against it — locally unavailable items carry a named alternative** | | | Blocking if violated |
+| **No hinge marked UNOBTAINABLE merely because it is slow, costly or inconvenient — only genuine unavailability, with the reason stated** | | | Blocking if violated |
+| **If a hinge is UNOBTAINABLE: §5.1b branch written with surrogate searched, certainty capped with reason, and default justified on asymmetry of harm — not a guessed value for the missing variable** | | | Blocking if violated |
 
 > **Coverage failure vs calibration failure.** A hypothesis that was never listed cannot be
 > mis-calibrated — it is simply absent, and absence leaves no trace in the confidence figures.
@@ -2032,7 +2143,7 @@ version and a changelog line. Preserve prior versions (never silently overwrite)
 
 **Focused modes (M0, M2–M11) — short block, only what ran:**
 ```
-CLINICAL-ASSISTANT v6.9 · [M#·NAME]
+CLINICAL-ASSISTANT v7.0 · [M#·NAME]
 Question: [what was asked] | Sources: [n] ([n_en] EN / [n_es] ES) | Window: [years, as of date]
 Novelty: [N0 n · N1 n · N2 n · N3 n]  |  Guideline anchor: [societies cited]
 Not covered (available on request): [phases skipped — e.g. board, plan, QA]
@@ -2043,14 +2154,15 @@ Files: [evidence-brief / evidence-synthesis / frontier-scan / .bib / pdf]
 
 **Full case (M1):**
 ```
-CLINICAL-ASSISTANT v6.9 · M1·CASE · DELIVERY
+CLINICAL-ASSISTANT v7.0 · M1·CASE · DELIVERY
 [✓] P1 Case (+ hinge variables) · P2–3 Evidence ([N] sources, tracks A/B/C, GRADE)
 [·] P2c Deep research: [NOT TRIGGERED — why] / [RAN — n cycles, stop rule, [N] candidates]
 [✓] P4 Deliberation (13-archetype board + hinge analysis) · P5 Plan ([UNCONDITIONAL/CONDITIONAL])
 [✓] P6 Report · P7 QA approved
 Dx-status: [working hypothesis / conditional on workup / UNDIAGNOSED — escalation target named]
+Jurisdiction: [country/region used for availability checks — or "not stated → international guidelines"]
 Goals-of-care axis: [NOT TRIGGERED — why] / [TRIGGERED G# — Arm A + Arm B + concurrent option written]
-Tx-status: [single path / decision tree pending {hinge vars} → resolving tests]
+Tx-status: [single path / decision tree pending {hinge vars} → resolving tests / UNRESOLVABLE {vars} → §5.1b branch + defensible default]
 Novelty content: [N0: n · N1 beyond-guideline: n · N2 trials: n · N3 excluded from plan: n]
 Recency window: evidence current as of [date]; frontier scan window [x months]
 Files: clinical-case · raw-evidence · [deep-research-memo] · grade-evidence+.bib · deliberation ·
@@ -2147,16 +2259,5 @@ trial registries. Use them when present; **this skill never requires them** — 
 above has a working fallback and the skill remains self-contained by design.
 
 ---
-
-## Emergency protocols (hard stops — override everything)
-
-**Medical emergency** (chest pain / dyspnea / LOC / stroke / seizure / massive bleeding):
-> EN: "This requires IMMEDIATE medical attention. Call 911 / 112 / local emergency or go to the ER NOW."
-> ES: "Esto requiere atención médica INMEDIATA. Llama al 911 / 112 o acude a urgencias AHORA."
-
-**Mental-health crisis** (suicidal ideation / active self-harm):
-Acknowledge warmly · do not continue workflow · ask if they are safe · provide local crisis line.
-
-**PHI detected:** request de-identification; do not store or repeat identifiers.
 
 **Provenance on every artifact:** `artifact_type · version · status: DRAFT · date · data_class · evidence_level · source_languages · review_required`
